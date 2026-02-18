@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mission Control | Freedom & Coffee</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+
+    :root{
+      --bg-base:#08090d;
+      --bg-surface:#0e1017;
+      --bg-card:#13151c;
+      --bg-card-hover:#191c26;
+      --bg-elevated:#1c1f2b;
+      --border:rgba(255,255,255,.06);
+      --border-accent:rgba(255,255,255,.1);
+      --text-primary:#eaeaf0;
+      --text-secondary:#a0a3b1;
+      --text-muted:#5e6173;
+      --accent-green:#34d399;
+      --accent-green-dim:rgba(52,211,153,.12);
+      --accent-yellow:#fbbf24;
+      --accent-yellow-dim:rgba(251,191,36,.12);
+      --accent-blue:#60a5fa;
+      --accent-blue-dim:rgba(96,165,250,.12);
+      --accent-purple:#a78bfa;
+      --accent-purple-dim:rgba(167,139,250,.12);
+      --accent-red:#f87171;
+      --accent-red-dim:rgba(248,113,113,.12);
+      --accent-orange:#fb923c;
+      --accent-orange-dim:rgba(251,146,60,.12);
+      --accent-cyan:#22d3ee;
+      --accent-cyan-dim:rgba(34,211,238,.12);
+      --radius:12px;
+      --radius-sm:8px;
+      --radius-lg:16px;
+    }
+
+    body{
+      font-family:'Inter',system-ui,-apple-system,sans-serif;
+      background:var(--bg-base);
+      color:var(--text-primary);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* ── Background grid effect ── */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%,rgba(96,165,250,.06),transparent),
+        radial-gradient(ellipse 60% 40% at 80% 60%,rgba(167,139,250,.04),transparent);
+      pointer-events:none;z-index:0;
+    }
+
+    /* ── Password Gate ── */
+    .password-gate{
+      position:fixed;inset:0;background:var(--bg-base);
+      display:flex;align-items:center;justify-content:center;z-index:9999;
+    }
+    .password-gate.hidden{display:none}
+    .password-form{text-align:center;padding:40px}
+    .password-form .logo{font-size:48px;margin-bottom:16px}
+    .password-form h1{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+    .password-form p{color:var(--text-muted);font-size:13px;margin-bottom:28px}
+    .password-form input{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:12px 16px;font-size:15px;
+      color:var(--text-primary);width:260px;font-family:inherit;
+      transition:border-color .2s;
+    }
+    .password-form input:focus{outline:none;border-color:var(--accent-blue)}
+    .password-form button{
+      display:block;margin:16px auto 0;
+      background:var(--accent-blue);color:#fff;border:none;
+      border-radius:var(--radius-sm);padding:10px 36px;
+      font-size:13px;font-weight:600;cursor:pointer;
+      font-family:inherit;transition:opacity .2s;
+    }
+    .password-form button:hover{opacity:.85}
+    .password-error{color:var(--accent-red);font-size:13px;margin-top:12px;display:none}
+
+    /* ── Layout ── */
+    .app{position:relative;z-index:1;display:none}
+
+    /* ── Top Bar ── */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 32px;border-bottom:1px solid var(--border);
+      background:rgba(8,9,13,.8);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
+    }
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .topbar-logo{font-size:20px}
+    .topbar-title{font-size:15px;font-weight:700;letter-spacing:-.3px}
+    .topbar-subtitle{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+    .topbar-right{display:flex;align-items:center;gap:20px}
+    .topbar-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary)}
+    .gateway-status{
+      display:flex;align-items:center;gap:6px;
+      font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;
+    }
+    .gateway-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-green)}
+
+    /* ── Nav Tabs ── */
+    .nav-tabs{
+      display:flex;gap:0;padding:0 32px;
+      border-bottom:1px solid var(--border);background:var(--bg-surface);
+    }
+    .nav-tab{
+      padding:12px 20px;font-size:12px;font-weight:600;
+      color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;
+      transition:all .2s;text-transform:uppercase;letter-spacing:.5px;
+    }
+    .nav-tab:hover{color:var(--text-secondary)}
+    .nav-tab.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
+
+    /* ── Page Container ── */
+    .page{display:none;padding:28px 32px;max-width:1440px;margin:0 auto}
+    .page.active{display:block}
+
+    /* ── Overview Page ── */
+
+    /* System stats bar */
+    .system-stats{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px;
+    }
+    .sys-stat{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:16px 20px;
+    }
+    .sys-stat .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px}
+    .sys-stat .value{font-size:22px;font-weight:800;letter-spacing:-.5px}
+    .sys-stat .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+    /* Org Chart */
+    .org-section{margin-bottom:32px}
+    .section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:16px;font-weight:600}
+
+    .org-grid{
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+    }
+
+    .org-level{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;width:100%;position:relative}
+    .org-connector{
+      width:2px;height:12px;background:var(--border);margin:0 auto;
+    }
+
+    /* Agent Card */
+    .agent-card{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:20px;flex:1;max-width:340px;min-width:280px;
+      transition:all .25s ease;cursor:default;position:relative;overflow:hidden;
+    }
+    .agent-card:hover{background:var(--bg-card-hover);border-color:var(--border-accent);transform:translateY(-1px)}
+    .agent-card.highlight-blue{border-color:rgba(96,165,250,.25)}
+    .agent-card.highlight-purple{border-color:rgba(167,139,250,.25)}
+    .agent-card.highlight-green{border-color:rgba(52,211,153,.25)}
+    .agent-card.highlight-yellow{border-color:rgba(251,191,36,.25)}
+    .agent-card.highlight-red{border-color:rgba(248,113,113,.25)}
+    .agent-card.highlight-cyan{border-color:rgba(34,211,238,.25)}
+
+    .agent-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    }
+    .agent-card.highlight-blue::before{background:linear-gradient(90deg,var(--accent-blue),transparent)}
+    .agent-card.highlight-purple::before{background:linear-gradient(90deg,var(--accent-purple),transparent)}
+    .agent-card.highlight-green::before{background:linear-gradient(90deg,var(--accent-green),transparent)}
+    .agent-card.highlight-yellow::before{background:linear-gradient(90deg,var(--accent-yellow),transparent)}
+    .agent-card.highlight-red::before{background:linear-gradient(90deg,var(--accent-red),transparent)}
+    .agent-card.highlight-cyan::before{background:linear-gradient(90deg,var(--accent-cyan),transparent)}
+
+    .agent-card.wide{max-width:380px}
+
+    .agent-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+    .agent-avatar{
+      width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;
+      flex-shrink:0;
+    }
+    .avatar-purple{background:var(--accent-purple-dim)}
+    .avatar-blue{background:var(--accent-blue-dim)}
+    .avatar-green{background:var(--accent-green-dim)}
+    .avatar-yellow{background:var(--accent-yellow-dim)}
+    .avatar-red{background:var(--accent-red-dim)}
+    .avatar-cyan{background:var(--accent-cyan-dim)}
+
+    .agent-info{flex:1;min-width:0}
+    .agent-name{font-size:14px;font-weight:700;letter-spacing:-.2px}
+    .agent-role{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+
+    .status-indicator{
+      display:flex;align-items:center;gap:5px;position:absolute;top:14px;right:16px;
+      font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:500;
+    }
+    .status-dot{width:7px;height:7px;border-radius:50%}
+    .status-dot.online{background:var(--accent-green);box-shadow:0 0 6px rgba(52,211,153,.4)}
+    .status-dot.idle{background:var(--accent-yellow);box-shadow:0 0 6px rgba(251,191,36,.3)}
+    .status-dot.offline{background:var(--text-muted)}
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-dot.online{animation:pulse-dot 2.5s ease-in-out infinite}
+
+    .agent-meta{
+      display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
+    }
+    .meta-tag{
+      font-size:10px;padding:3px 8px;border-radius:4px;
+      background:rgba(255,255,255,.04);color:var(--text-muted);
+      font-family:'JetBrains Mono',monospace;
+    }
+
+    .agent-task{
+      background:rgba(0,0,0,.25);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;
+    }
+    .agent-task .task-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px}
+    .agent-task .task-text{font-size:13px;color:var(--text-secondary);line-height:1.5}
+
+    .agent-stats{display:flex;gap:8px}
+    .agent-stat{
+      flex:1;text-align:center;background:rgba(0,0,0,.2);border-radius:var(--radius-sm);padding:10px 6px;
+    }
+    .agent-stat .num{font-size:18px;font-weight:800;letter-spacing:-.5px}
+    .agent-stat .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px}
+
+    /* ── Two-column layout ── */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px}
+
+    /* ── Brief Panel ── */
+    .panel{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:24px;
+    }
+    .panel-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:20px;
+    }
+    .panel-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .panel-badge{
+      font-size:10px;padding:2px 8px;border-radius:10px;
+      background:var(--accent-blue-dim);color:var(--accent-blue);font-weight:600;
+    }
+
+    /* Priority items */
+    .priority-item{
+      display:flex;align-items:flex-start;gap:10px;
+      padding:12px;background:rgba(0,0,0,.2);border-radius:var(--radius-sm);
+      margin-bottom:8px;border-left:3px solid transparent;
+    }
+    .priority-item:last-child{margin-bottom:0}
+    .priority-item.p-decision{border-left-color:var(--accent-purple)}
+    .priority-item.p-action{border-left-color:var(--accent-blue)}
+    .priority-item.p-review{border-left-color:var(--accent-yellow)}
+    .priority-item.p-alert{border-left-color:var(--accent-red)}
+
+    .priority-tag{
+      font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+      padding:3px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:1px;
+    }
+    .tag-decision{background:var(--accent-purple-dim);color:var(--accent-purple)}
+    .tag-action{background:var(--accent-blue-dim);color:var(--accent-blue)}
+    .tag-review{background:var(--accent-yellow-dim);color:var(--accent-yellow)}
+    .tag-alert{background:var(--accent-red-dim);color:var(--accent-red)}
+
+    .priority-text{font-size:13px;color:var(--text-secondary);line-height:1.5}
+
+    /* Activity feed */
+    .feed-item{
+      display:flex;gap:12px;padding:10px 0;
+      border-bottom:1px solid var(--border);
+    }
+    .feed-item:last-child{border-bottom:none}
+    .feed-dot{
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;
+    }
+    .feed-dot.dot-blue{background:var(--accent-blue)}
+    .feed-dot.dot-green{background:var(--accent-green)}
+    .feed-dot.dot-purple{background:var(--accent-purple)}
+    .feed-dot.dot-yellow{background:var(--accent-yellow)}
+    .feed-dot.dot-red{background:var(--accent-red)}
+    .feed-content{flex:1;min-width:0}
+    .feed-text{font-size:13px;color:var(--text-secondary);line-height:1.4}
+    .feed-text strong{color:var(--text-primary);font-weight:600}
+    .feed-time{font-size:10px;color:var(--text-muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+    /* ── Queue Page ── */
+    .queue-columns{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .queue-col{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:20px;
+    }
+    .queue-col-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);
+    }
+    .queue-col-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .queue-count{
+      font-size:10px;padding:2px 8px;border-radius:10px;
+      background:rgba(255,255,255,.06);color:var(--text-muted);font-weight:600;
+    }
+    .queue-item{
+      padding:14px;background:rgba(0,0,0,.2);border-radius:var(--radius-sm);
+      margin-bottom:10px;border-left:3px solid var(--border);
+    }
+    .queue-item:last-child{margin-bottom:0}
+    .queue-item.qi-urgent{border-left-color:var(--accent-red)}
+    .queue-item.qi-high{border-left-color:var(--accent-orange)}
+    .queue-item.qi-normal{border-left-color:var(--accent-blue)}
+    .queue-item.qi-low{border-left-color:var(--text-muted)}
+    .queue-item-title{font-size:13px;font-weight:600;margin-bottom:4px}
+    .queue-item-meta{font-size:11px;color:var(--text-muted);display:flex;gap:12px}
+
+    /* ── Roles Page ── */
+    .role-detail{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;
+    }
+    .role-detail-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    .role-detail-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px}
+    .role-detail-info h2{font-size:18px;font-weight:700;letter-spacing:-.3px}
+    .role-detail-info .sub{font-size:12px;color:var(--text-muted)}
+    .role-detail-body{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .role-section h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px}
+    .role-section ul{list-style:none;padding:0}
+    .role-section li{
+      font-size:13px;color:var(--text-secondary);padding:6px 0;
+      border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+    }
+    .role-section li:last-child{border-bottom:none}
+    .check{color:var(--accent-green)}
+    .pending{color:var(--accent-yellow)}
+    .blocked{color:var(--accent-red)}
+
+    /* ── Pipeline Table (Sales) ── */
+    .pipeline-table{width:100%;border-collapse:collapse;font-size:13px}
+    .pipeline-table th{
+      text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+      color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600;
+    }
+    .pipeline-table td{
+      padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-secondary);
+    }
+    .pipeline-table tr:last-child td{border-bottom:none}
+    .pipeline-status{
+      font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;
+    }
+    .ps-active{background:var(--accent-green-dim);color:var(--accent-green)}
+    .ps-cold{background:var(--accent-yellow-dim);color:var(--accent-yellow)}
+    .ps-blocked{background:var(--accent-red-dim);color:var(--accent-red)}
+
+    /* ── Responsive ── */
+    @media(max-width:1024px){
+      .system-stats{grid-template-columns:repeat(3,1fr)}
+      .two-col{grid-template-columns:1fr}
+      .queue-columns{grid-template-columns:1fr}
+      .role-detail-body{grid-template-columns:1fr}
+    }
+    @media(max-width:768px){
+      .topbar{padding:12px 16px}
+      .nav-tabs{padding:0 16px;overflow-x:auto}
+      .page{padding:20px 16px}
+      .system-stats{grid-template-columns:repeat(2,1fr)}
+      .org-level{flex-direction:column;align-items:center}
+      .agent-card{max-width:100%;min-width:0}
+    }
+
+    /* ── Animations ── */
+    @keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .fade-in{animation:fade-in .4s ease both}
+    .delay-1{animation-delay:.1s}
+    .delay-2{animation-delay:.2s}
+    .delay-3{animation-delay:.3s}
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--border-accent)}
+  </style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div class="password-gate" id="passwordGate">
+  <div class="password-form">
+    <div class="logo">🎯</div>
+    <h1>Mission Control</h1>
+    <p>Freedom & Coffee Executive System</p>
+    <input type="password" id="passwordInput" placeholder="Enter access code" autofocus>
+    <button onclick="checkPassword()">Enter</button>
+    <p class="password-error" id="passwordError">Incorrect password</p>
+  </div>
+</div>
+
+<!-- App Shell -->
+<div class="app" id="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">🎯</span>
+      <div>
+        <div class="topbar-title">Mission Control</div>
+        <div class="topbar-subtitle">Freedom & Coffee</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="gateway-status">
+        <span class="gateway-dot"></span>
+        System Online
+      </div>
+      <div class="topbar-time" id="clock"></div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-page="overview">Overview</div>
+    <div class="nav-tab" data-page="queue">Task Queue</div>
+    <div class="nav-tab" data-page="roles">Role Details</div>
+    <div class="nav-tab" data-page="brief">Daily Brief</div>
+  </div>
+
+  <!-- ═══════════ OVERVIEW PAGE ═══════════ -->
+  <div class="page active" id="page-overview">
+
+    <!-- System Stats -->
+    <div class="system-stats fade-in">
+      <div class="sys-stat">
+        <div class="label">Active Agents</div>
+        <div class="value" style="color:var(--accent-green)">4</div>
+        <div class="sub">of 4 Phase 1 roles</div>
+      </div>
+      <div class="sys-stat">
+        <div class="label">Tasks In Queue</div>
+        <div class="value" id="statQueue">7</div>
+        <div class="sub">across all roles</div>
+      </div>
+      <div class="sys-stat">
+        <div class="label">Pipeline</div>
+        <div class="value" style="color:var(--accent-green)">4</div>
+        <div class="sub">active leads</div>
+      </div>
+      <div class="sys-stat">
+        <div class="label">System Health</div>
+        <div class="value" style="color:var(--accent-green)">99.9%</div>
+        <div class="sub">all systems green</div>
+      </div>
+      <div class="sys-stat">
+        <div class="label">Decisions Pending</div>
+        <div class="value" style="color:var(--accent-purple)">3</div>
+        <div class="sub">awaiting Dom</div>
+      </div>
+    </div>
+
+    <!-- Org Chart -->
+    <div class="org-section">
+      <div class="section-title">Organization</div>
+      <div class="org-grid">
+
+        <!-- Level 1: CEO -->
+        <div class="org-level" style="justify-content:center">
+          <div class="agent-card wide highlight-purple fade-in">
+            <div class="status-indicator"><span class="status-dot online"></span>Online</div>
+            <div class="agent-header">
+              <div class="agent-avatar avatar-purple">👤</div>
+              <div class="agent-info">
+                <div class="agent-name">Dominique DeLeon</div>
+                <div class="agent-role">CEO / Founder</div>
+              </div>
+            </div>
+            <div class="agent-task">
+              <div class="task-label">Current Focus</div>
+              <div class="task-text" id="ceoFocus">Building multi-agent executive system</div>
+            </div>
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-purple)" id="pendingDecisions">3</div>
+                <div class="lbl">Pending</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-green)">4.5h</div>
+                <div class="lbl">Flow Time</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-blue)">4</div>
+                <div class="lbl">Agents</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="org-connector"></div>
+
+        <!-- Level 2: Chief of Staff -->
+        <div class="org-level" style="justify-content:center">
+          <div class="agent-card wide highlight-blue fade-in delay-1">
+            <div class="status-indicator"><span class="status-dot online"></span>Active</div>
+            <div class="agent-header">
+              <div class="agent-avatar avatar-blue">🎭</div>
+              <div class="agent-info">
+                <div class="agent-name">Conrad</div>
+                <div class="agent-role">Chief of Staff</div>
+              </div>
+            </div>
+            <div class="agent-meta">
+              <span class="meta-tag">Claude Opus 4.6</span>
+              <span class="meta-tag">Autonomy: Recommend</span>
+              <span class="meta-tag">Hub</span>
+            </div>
+            <div class="agent-task">
+              <div class="task-label">Current Task</div>
+              <div class="task-text" id="cosFocus">Building Mission Control dashboard</div>
+            </div>
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-blue)" id="cosQueueCount">5</div>
+                <div class="lbl">Queue</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-green)" id="cosCompletedCount">12</div>
+                <div class="lbl">Completed</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-yellow)">0</div>
+                <div class="lbl">Blocked</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="org-connector"></div>
+
+        <!-- Level 3: Specialists -->
+        <div class="org-level fade-in delay-2">
+
+          <!-- Head of Sales -->
+          <div class="agent-card highlight-green">
+            <div class="status-indicator"><span class="status-dot idle"></span>Standby</div>
+            <div class="agent-header">
+              <div class="agent-avatar avatar-green">💼</div>
+              <div class="agent-info">
+                <div class="agent-name">Sales Agent</div>
+                <div class="agent-role">Head of Sales</div>
+              </div>
+            </div>
+            <div class="agent-meta">
+              <span class="meta-tag">Claude Sonnet 4.6</span>
+              <span class="meta-tag">Recommend → Auto</span>
+            </div>
+            <div class="agent-task">
+              <div class="task-label">Pipeline</div>
+              <div class="task-text">4 active leads · 2 awaiting follow-up</div>
+            </div>
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-green)">4</div>
+                <div class="lbl">Leads</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-yellow)">~$20K</div>
+                <div class="lbl">Pipeline</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTO -->
+          <div class="agent-card highlight-yellow">
+            <div class="status-indicator"><span class="status-dot online"></span>Monitoring</div>
+            <div class="agent-header">
+              <div class="agent-avatar avatar-yellow">⚙️</div>
+              <div class="agent-info">
+                <div class="agent-name">Tech Agent</div>
+                <div class="agent-role">CTO</div>
+              </div>
+            </div>
+            <div class="agent-meta">
+              <span class="meta-tag">Claude Opus 4.6</span>
+              <span class="meta-tag">Autonomous (monitor)</span>
+            </div>
+            <div class="agent-task">
+              <div class="task-label">System Status</div>
+              <div class="task-text">All systems operational · 0 alerts</div>
+            </div>
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-green)">0</div>
+                <div class="lbl">Alerts</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-green)">99.9%</div>
+                <div class="lbl">Uptime</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chief Life Officer -->
+          <div class="agent-card highlight-red">
+            <div class="status-indicator"><span class="status-dot idle"></span>Observing</div>
+            <div class="agent-header">
+              <div class="agent-avatar avatar-red">🧘</div>
+              <div class="agent-info">
+                <div class="agent-name">Life Agent</div>
+                <div class="agent-role">Chief Life Officer</div>
+              </div>
+            </div>
+            <div class="agent-meta">
+              <span class="meta-tag">Claude Sonnet 4.6</span>
+              <span class="meta-tag">Alert Only</span>
+            </div>
+            <div class="agent-task">
+              <div class="task-label">Life Balance</div>
+              <div class="task-text">Last workout: 2 days ago · Family time: moderate</div>
+            </div>
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-yellow)">3</div>
+                <div class="lbl">Workouts/Wk</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num" style="color:var(--accent-blue)">7.2</div>
+                <div class="lbl">Balance</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-column: Brief + Activity -->
+    <div class="two-col">
+
+      <!-- Today's Priorities -->
+      <div class="panel fade-in delay-2">
+        <div class="panel-header">
+          <div class="panel-title">📋 Today's Priorities</div>
+          <span class="panel-badge">3 items</span>
+        </div>
+        <div class="priority-item p-decision">
+          <span class="priority-tag tag-decision">Decision</span>
+          <span class="priority-text">Multi-agent system — approve PRD and begin Phase 1 build</span>
+        </div>
+        <div class="priority-item p-action">
+          <span class="priority-tag tag-action">Action</span>
+          <span class="priority-text">AI SDR build blocked — email domain purchase needed (2-week warm-up)</span>
+        </div>
+        <div class="priority-item p-review">
+          <span class="priority-tag tag-review">Review</span>
+          <span class="priority-text">Living Leadership — follow-up overdue (3 days cold)</span>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="panel fade-in delay-3">
+        <div class="panel-header">
+          <div class="panel-title">⚡ Recent Activity</div>
+        </div>
+        <div id="activityFeed">
+          <div class="feed-item">
+            <span class="feed-dot dot-blue"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>Conrad</strong> started building Mission Control v2 dashboard</div>
+              <div class="feed-time">23:48 PST</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <span class="feed-dot dot-purple"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>Dom</strong> approved PRD for multi-agent executive system</div>
+              <div class="feed-time">23:30 PST</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <span class="feed-dot dot-green"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>CTO</strong> completed infrastructure health check — all green</div>
+              <div class="feed-time">22:15 PST</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <span class="feed-dot dot-yellow"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>Conrad</strong> drafted Supabase roles migration</div>
+              <div class="feed-time">21:40 PST</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <span class="feed-dot dot-red"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>Life Agent</strong> flagged: last workout was 2 days ago</div>
+              <div class="feed-time">20:00 PST</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <span class="feed-dot dot-blue"></span>
+            <div class="feed-content">
+              <div class="feed-text"><strong>Sales</strong> sent follow-up to Theme Health</div>
+              <div class="feed-time">18:30 PST</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TASK QUEUE PAGE ═══════════ -->
+  <div class="page" id="page-queue">
+    <div class="section-title">Task Queue</div>
+    <div class="queue-columns">
+      <!-- Backlog -->
+      <div class="queue-col">
+        <div class="queue-col-header">
+          <span class="queue-col-title">📥 Backlog</span>
+          <span class="queue-count">4</span>
+        </div>
+        <div class="queue-item qi-high">
+          <div class="queue-item-title">Run Supabase roles migration</div>
+          <div class="queue-item-meta"><span>🎭 Conrad</span><span>High</span></div>
+        </div>
+        <div class="queue-item qi-normal">
+          <div class="queue-item-title">Create cron job for morning brief (8am)</div>
+          <div class="queue-item-meta"><span>🎭 Conrad</span><span>Normal</span></div>
+        </div>
+        <div class="queue-item qi-normal">
+          <div class="queue-item-title">Set up role session spawning</div>
+          <div class="queue-item-meta"><span>🎭 Conrad</span><span>Normal</span></div>
+        </div>
+        <div class="queue-item qi-low">
+          <div class="queue-item-title">Implement automated security scanning</div>
+          <div class="queue-item-meta"><span>⚙️ CTO</span><span>Low</span></div>
+        </div>
+      </div>
+
+      <!-- In Progress -->
+      <div class="queue-col">
+        <div class="queue-col-header">
+          <span class="queue-col-title">🔨 In Progress</span>
+          <span class="queue-count">2</span>
+        </div>
+        <div class="queue-item qi-urgent">
+          <div class="queue-item-title">Build Mission Control dashboard v2</div>
+          <div class="queue-item-meta"><span>🎭 Conrad</span><span>Urgent</span></div>
+        </div>
+        <div class="queue-item qi-high">
+          <div class="queue-item-title">Living Leadership follow-up (3 days cold)</div>
+          <div class="queue-item-meta"><span>💼 Sales</span><span>High</span></div>
+        </div>
+      </div>
+
+      <!-- Blocked / Waiting -->
+      <div class="queue-col">
+        <div class="queue-col-header">
+          <span class="queue-col-title">⏸️ Blocked</span>
+          <span class="queue-count">1</span>
+        </div>
+        <div class="queue-item qi-urgent">
+          <div class="queue-item-title">AI SDR build — needs email domains + warm-up</div>
+          <div class="queue-item-meta"><span>💼 Sales</span><span>~2 weeks</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ROLES PAGE ═══════════ -->
+  <div class="page" id="page-roles">
+    <div class="section-title">Role Details</div>
+
+    <!-- Conrad -->
+    <div class="role-detail">
+      <div class="role-detail-header">
+        <div class="role-detail-icon avatar-blue" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px">🎭</div>
+        <div class="role-detail-info">
+          <h2>Conrad — Chief of Staff</h2>
+          <div class="sub">Hub / Orchestrator · Autonomy: Recommend · Claude Opus 4.6</div>
+        </div>
+      </div>
+      <div class="role-detail-body">
+        <div class="role-section">
+          <h4>Current Queue</h4>
+          <ul>
+            <li><span class="pending">◐</span> Build Mission Control dashboard v2</li>
+            <li><span class="pending">○</span> Run Supabase roles migration</li>
+            <li><span class="pending">○</span> Deploy Mission Control to GitHub Pages</li>
+            <li><span class="pending">○</span> Create morning brief cron (8am)</li>
+            <li><span class="pending">○</span> Set up role session spawning</li>
+          </ul>
+        </div>
+        <div class="role-section">
+          <h4>Recent Decisions</h4>
+          <ul>
+            <li><span class="check">✓</span> Chose standalone build over Notion MVP</li>
+            <li><span class="check">✓</span> Org chart visual structure confirmed</li>
+            <li><span class="check">✓</span> Chief of Staff as hub (no peer-to-peer)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales -->
+    <div class="role-detail">
+      <div class="role-detail-header">
+        <div class="role-detail-icon avatar-green" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px">💼</div>
+        <div class="role-detail-info">
+          <h2>Sales Agent — Head of Sales</h2>
+          <div class="sub">Pipeline & Outreach · Autonomy: Recommend → Autonomous · Claude Sonnet 4.6</div>
+        </div>
+      </div>
+      <div class="role-detail-body" style="grid-template-columns:1fr">
+        <div class="role-section">
+          <h4>Pipeline</h4>
+          <table class="pipeline-table">
+            <thead><tr><th>Client</th><th>Status</th><th>Next Action</th><th>Last Contact</th></tr></thead>
+            <tbody>
+              <tr><td>Living Leadership</td><td><span class="pipeline-status ps-cold">Cold</span></td><td>Follow-up overdue</td><td>Feb 14</td></tr>
+              <tr><td>Theme Health</td><td><span class="pipeline-status ps-active">Active</span></td><td>Awaiting feedback</td><td>Feb 16</td></tr>
+              <tr><td>The Refig</td><td><span class="pipeline-status ps-active">Active</span></td><td>Proposal sent</td><td>Feb 15</td></tr>
+              <tr><td>P&G/Mielle (Egami)</td><td><span class="pipeline-status ps-active">Active</span></td><td>Deliverable in progress</td><td>Feb 17</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTO -->
+    <div class="role-detail">
+      <div class="role-detail-header">
+        <div class="role-detail-icon avatar-yellow" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px">⚙️</div>
+        <div class="role-detail-info">
+          <h2>Tech Agent — CTO</h2>
+          <div class="sub">Infrastructure & Security · Autonomy: Autonomous (monitoring) · Claude Opus 4.6</div>
+        </div>
+      </div>
+      <div class="role-detail-body">
+        <div class="role-section">
+          <h4>Systems</h4>
+          <ul>
+            <li><span class="check">✓</span> Kanban (Supabase) — Healthy</li>
+            <li><span class="pending">◐</span> Mission Control — Building</li>
+            <li><span class="pending">○</span> NakamaOS — Needs DB review</li>
+            <li><span class="check">✓</span> Clawdbot Gateway — Running</li>
+          </ul>
+        </div>
+        <div class="role-section">
+          <h4>Tech Debt</h4>
+          <ul>
+            <li><span class="pending">○</span> NakamaOS DB connection handling</li>
+            <li><span class="pending">○</span> Automated security scanning</li>
+            <li><span class="pending">○</span> Uptime monitoring setup</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Life -->
+    <div class="role-detail">
+      <div class="role-detail-header">
+        <div class="role-detail-icon avatar-red" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px">🧘</div>
+        <div class="role-detail-info">
+          <h2>Life Agent — Chief Life Officer</h2>
+          <div class="sub">Relationships, Health, Legacy · Autonomy: Alert Only · Claude Sonnet 4.6</div>
+        </div>
+      </div>
+      <div class="role-detail-body">
+        <div class="role-section">
+          <h4>Life Dimensions</h4>
+          <ul>
+            <li><span class="pending">◐</span> Fitness: 3x/wk target, last workout 2 days ago</li>
+            <li><span class="check">✓</span> Family: Daughter tap class today ✓</li>
+            <li><span class="pending">○</span> Asa 2-month checkup this week?</li>
+            <li><span class="pending">○</span> Danai work event Thursday</li>
+          </ul>
+        </div>
+        <div class="role-section">
+          <h4>Major Goals</h4>
+          <ul>
+            <li>🇪🇸 US Exit: June 2026 → Spain/Portugal</li>
+            <li>🥊 First amateur fight: May 2026</li>
+            <li>💰 F&C to $10K+ consistent</li>
+            <li>⚖️ Weight: 294 → 260 lbs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DAILY BRIEF PAGE ═══════════ -->
+  <div class="page" id="page-brief">
+    <div class="panel" style="max-width:800px;margin:0 auto">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Brief — <span id="briefDate"></span></div>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div class="section-title" style="margin-bottom:12px">🎯 Today's Priorities</div>
+        <div class="priority-item p-decision">
+          <span class="priority-tag tag-decision">Decision</span>
+          <span class="priority-text">Multi-agent system architecture — approve PRD and begin build</span>
+        </div>
+        <div class="priority-item p-action">
+          <span class="priority-tag tag-action">Action</span>
+          <span class="priority-text">AI SDR build blocked on email domain purchase (2-week warm-up needed)</span>
+        </div>
+        <div class="priority-item p-review">
+          <span class="priority-tag tag-review">Review</span>
+          <span class="priority-text">Living Leadership follow-up — 3 days cold, risk of losing lead</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div class="section-title" style="margin-bottom:12px">📊 Role Status</div>
+        <div class="priority-item" style="border-left-color:var(--accent-green)">
+          <span class="priority-text">
+            <strong>Sales:</strong> Pipeline active. Living Leadership needs urgent follow-up. Theme Health awaiting feedback. ~$20K projected this month.<br>
+            <strong>Tech:</strong> All systems green. Kanban healthy. Mission Control in active build. NakamaOS DB review queued.<br>
+            <strong>Life:</strong> Last workout 2 days ago. Daughter's tap class today ✓. Asa checkup coming up. Danai event Thursday.
+          </span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div class="section-title" style="margin-bottom:12px">📅 Calendar</div>
+        <div class="priority-item" style="border-left-color:var(--accent-cyan)">
+          <span class="priority-text">
+            Protected deep work blocks recommended: 10am-12pm<br>
+            Danai work event: Thursday<br>
+            Asa 2-month checkup: TBD this week
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title" style="margin-bottom:12px">🧘 Life Check</div>
+        <div class="priority-item" style="border-left-color:var(--accent-red)">
+          <span class="priority-text">
+            Weight goal: 294 → 260 lbs. Boxing target: 5x/week at Lobos.<br>
+            Last workout was 2 days ago — get one in today.<br>
+            US exit timeline: June 2026. First fight: May 2026.<br>
+            <em style="color:var(--text-muted)">"Is this week's work moving toward the life you actually want?"</em>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px">
+    Mission Control v2.0 · Freedom & Coffee · Built by Conrad 🎭
+  </div>
+</div>
+
+<script>
+  // ── Config ──
+  const SUPABASE_URL='https://sgcynfmkhqowdboweahz.supabase.co';
+  const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnY3luZm1raHFvd2Rib3dlYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3Nzg0OTYsImV4cCI6MjA4NDM1NDQ5Nn0.adsPZ0U_Ce2oM7MWaczBN9sqjVGhFfaht01eBktD6As';
+  const PASSWORD_HASH='9f9e51def43bc79d1c735f27e3c532ffbc1c787d0b326f6c678a1ccc16d8b6a5';
+
+  const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  // ── Password ──
+  async function hashPassword(p){
+    const d=new TextEncoder().encode(p);
+    const h=await crypto.subtle.digest('SHA-256',d);
+    return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function checkPassword(){
+    const input=document.getElementById('passwordInput').value;
+    if(await hashPassword(input)===PASSWORD_HASH){
+      document.getElementById('passwordGate').classList.add('hidden');
+      document.getElementById('app').style.display='block';
+      localStorage.setItem('mc_auth','true');
+      initApp();
+    } else {
+      document.getElementById('passwordError').style.display='block';
+      document.getElementById('passwordInput').value='';
+    }
+  }
+
+  document.getElementById('passwordInput').addEventListener('keyup',e=>{if(e.key==='Enter')checkPassword()});
+
+  if(localStorage.getItem('mc_auth')==='true'){
+    document.getElementById('passwordGate').classList.add('hidden');
+    document.getElementById('app').style.display='block';
+    initApp();
+  }
+
+  // ── App Init ──
+  function initApp(){
+    updateClock();
+    setInterval(updateClock,1000);
+    updateBriefDate();
+    loadSupabaseData();
+
+    // Nav tabs
+    document.querySelectorAll('.nav-tab').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('page-'+tab.dataset.page).classList.add('active');
+      });
+    });
+  }
+
+  function updateClock(){
+    const now=new Date();
+    const opts={hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/Los_Angeles'};
+    document.getElementById('clock').textContent=now.toLocaleTimeString('en-US',opts)+' PST';
+  }
+
+  function updateBriefDate(){
+    const now=new Date();
+    const opts={weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'America/Los_Angeles'};
+    document.getElementById('briefDate').textContent=now.toLocaleDateString('en-US',opts);
+  }
+
+  // ── Supabase ──
+  async function loadSupabaseData(){
+    try{
+      const {data:status}=await supabase.from('agent_status').select('*').order('last_heartbeat',{ascending:false}).limit(1);
+      if(status&&status[0]){
+        if(status[0].current_task) document.getElementById('cosFocus').textContent=status[0].current_task;
+      }
+      const {data:tasks}=await supabase.from('tasks').select('*').in('status',['backlog','in-progress']);
+      if(tasks){
+        document.getElementById('statQueue').textContent=tasks.length||'7';
+        document.getElementById('cosQueueCount').textContent=tasks.length||'5';
+      }
+    }catch(e){console.log('Supabase:',e)}
+  }
+
+  // Real-time
+  supabase.channel('mc-updates')
+    .on('postgres_changes',{event:'*',schema:'public',table:'agent_status'},()=>loadSupabaseData())
+    .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},()=>loadSupabaseData())
+    .subscribe();
+</script>
+</body>
+</html>
