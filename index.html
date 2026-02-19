@@ -1159,6 +1159,9 @@
 
 </div><!-- /shell -->
 
+<!-- Global error catch -->
+<script>window.onerror=function(m,s,l){document.title='ERR:'+m;var d=document.getElementById('passwordError');if(d){d.textContent='JS Error: '+m+' (line '+l+')';d.style.display='block';}};</script>
+
 <!-- Password auth - standalone, no dependencies -->
 <script>
   (function() {
