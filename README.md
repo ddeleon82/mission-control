@@ -11,32 +11,21 @@ An org-chart style command center for managing AI agent roles:
 - **CTO** — System health, security, infrastructure
 - **Chief Life Officer** — Long-game tracking, balance
 
-## Architecture
+## Features
 
-```
-         ┌─────────────┐
-         │     DOM     │
-         │    (CEO)    │
-         └──────┬──────┘
-                │
-         ┌──────┴──────┐
-         │   CONRAD    │
-         │    (CoS)    │
-         └──────┬──────┘
-                │
-    ┌───────────┼───────────┐
-    │           │           │
-┌───┴───┐  ┌────┴────┐  ┌───┴───┐
-│ SALES │  │   CTO   │  │ LIFE  │
-└───────┘  └─────────┘  └───────┘
-```
+- **Overview** — Agent status, activity feed, priority queue
+- **Agents** — Detailed agent cards with real-time Supabase status
+- **Tasks** — Kanban-style task board (backlog/in-progress/done) synced with Supabase
+- **Daily Brief** — Priorities, email triage, calendar, pipeline, life check
+- **Pipeline** — Sales leads and SDR build status
+- **Org Chart** — Visual hierarchy with phase 2 preview
 
 ## Tech Stack
 
 - Single HTML file (zero build)
-- Supabase for real-time data
+- Supabase for real-time data (agent_status, tasks tables)
 - Password-protected (SHA-256 hash gate)
-- Same backend as Conrad's Kanban
+- `memory/tasks.md` remains source of truth; Supabase for display
 
 ## Local Development
 
@@ -46,11 +35,11 @@ Just open `index.html` in a browser. Password: `freedomandcoffee`
 
 Push to GitHub, enable Pages on main branch.
 
-## Related
+## History
 
-- [PRD](/docs/PRD-multi-agent-system.md) — Full product design document
-- [Kanban](/kanban/) — Task board
-- [Memory](/memory/) — Agent memory files
+- **v1** — Original kanban board (conrad-kanban, now archived)
+- **v2** — Mission Control dashboard with agent roles
+- **v3** — Consolidated task management from kanban
 
 ---
 
