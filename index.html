@@ -1165,7 +1165,10 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnY3luZm1raHFvd2Rib3dlYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3Nzg0OTYsImV4cCI6MjA4NDM1NDQ5Nn0.adsPZ0U_Ce2oM7MWaczBN9sqjVGhFfaht01eBktD6As';
   const PASSWORD_HASH = 'f4127ad448fa57d63edf47ee143f43a56b6357d7d81f76260e9f05e301643ecb';
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let supabase;
+  try {
+    supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+  } catch(e) { console.warn('Supabase init failed:', e); }
 
   // ═══ Auth ═══
   function checkPassword() {
@@ -1224,6 +1227,7 @@
 
   // ═══ Supabase Data ═══
   async function loadSupabaseData() {
+    if (!supabase) return;
     try {
       const { data: status } = await supabase
         .from('agent_status')
@@ -1255,7 +1259,7 @@
   }
 
   // ═══ Real-time ═══
-  supabase
+  if (supabase) supabase
     .channel('mc-updates')
     .on('postgres_changes', { event:'*', schema:'public', table:'agent_status' }, () => loadSupabaseData())
     .subscribe();
