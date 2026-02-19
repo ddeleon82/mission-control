@@ -378,7 +378,7 @@
     <h1>Mission Control</h1>
     <p>Freedom & Coffee Executive System</p>
     <input type="password" id="passwordInput" placeholder="Password" autofocus>
-    <button onclick="checkPassword()">Enter</button>
+    <button id="enterBtn" type="button">Enter</button>
     <p class="password-error" id="passwordError">Incorrect password</p>
   </div>
 </div>
@@ -1161,25 +1161,37 @@
 
 <!-- Password auth - standalone, no dependencies -->
 <script>
-  function checkPassword() {
-    var input = document.getElementById('passwordInput').value;
-    if (input === 'freedomandcoffee') {
-      document.getElementById('passwordGate').classList.add('hidden');
-      document.getElementById('shell').style.display = 'block';
-      localStorage.setItem('mc_auth', 'true');
-      if (typeof initDashboard === 'function') initDashboard();
-    } else {
-      document.getElementById('passwordError').style.display = 'block';
-      document.getElementById('passwordInput').value = '';
+  (function() {
+    var pw = document.getElementById('passwordInput');
+    var btn = document.getElementById('enterBtn');
+    var gate = document.getElementById('passwordGate');
+    var shell = document.getElementById('shell');
+    var err = document.getElementById('passwordError');
+
+    function doLogin() {
+      var val = pw.value;
+      if (val === 'freedomandcoffee') {
+        gate.style.display = 'none';
+        shell.style.display = 'block';
+        try { localStorage.setItem('mc_auth', 'true'); } catch(e) {}
+        if (typeof initDashboard === 'function') initDashboard();
+      } else {
+        err.style.display = 'block';
+        pw.value = '';
+      }
     }
-  }
-  document.getElementById('passwordInput').addEventListener('keyup', function(e) {
-    if (e.key === 'Enter') checkPassword();
-  });
-  if (localStorage.getItem('mc_auth') === 'true') {
-    document.getElementById('passwordGate').classList.add('hidden');
-    document.getElementById('shell').style.display = 'block';
-  }
+
+    btn.addEventListener('click', doLogin);
+    btn.addEventListener('touchend', function(e) { e.preventDefault(); doLogin(); });
+    pw.addEventListener('keyup', function(e) { if (e.key === 'Enter') doLogin(); });
+
+    try {
+      if (localStorage.getItem('mc_auth') === 'true') {
+        gate.style.display = 'none';
+        shell.style.display = 'block';
+      }
+    } catch(e) {}
+  })();
 </script>
 
 <script>
