@@ -1743,13 +1743,19 @@
   async function routeCOOTask(text, forcedAssignee = 'auto') {
     const status = document.getElementById('cooRouteStatus');
     const log = document.getElementById('cooRouteLog');
-    let route = inferRoute(text);
+    const suggested = inferRoute(text);
 
-    if (forcedAssignee !== 'auto' && ROUTE_MAP[forcedAssignee]) {
-      route = { assignee: forcedAssignee, role: ROUTE_MAP[forcedAssignee].role, priority: ROUTE_MAP[forcedAssignee].priority };
-    }
+    // Conrad-first orchestration model: all inbound tasks are assigned to Conrad.
+    const route = {
+      assignee: 'Conrad',
+      role: 'Chief of Staff',
+      priority: suggested.priority,
+      suggestedAssignee: (forcedAssignee !== 'auto' && ROUTE_MAP[forcedAssignee]) ? forcedAssignee : suggested.assignee
+    };
 
-    if (status) status.textContent = `Routing to ${route.assignee}…`;
+    if (status) status.textContent = `Routing to Conrad…`;
+
+    const descriptionWithHint = `[Suggested delegate: ${route.suggestedAssignee}] ${text}`;
 
     let persisted = false;
     let errorHint = '';
@@ -1757,7 +1763,7 @@
       try {
         const payload = {
           title: text.slice(0, 110),
-          description: text,
+          description: descriptionWithHint,
           status: 'backlog',
           priority: route.priority,
           assigned_to: route.assignee
@@ -1773,7 +1779,7 @@
     if (log) {
       const item = document.createElement('div');
       item.className = 'card card-sm';
-      item.innerHTML = `<div style="font-size:12px"><strong>Routed:</strong> ${route.assignee} <span style="color:var(--text-muted)">(${route.role})</span></div><div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${text}</div>`;
+      item.innerHTML = `<div style="font-size:12px"><strong>Routed:</strong> Conrad <span style="color:var(--text-muted)">(Chief of Staff)</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Suggested delegate: ${route.suggestedAssignee}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${text}</div>`;
       log.prepend(item);
       while (log.children.length > 6) log.removeChild(log.lastChild);
     }
@@ -1784,7 +1790,7 @@
         existing.unshift({
           id: `local-${Date.now()}`,
           title: text.slice(0, 110),
-          description: text,
+          description: descriptionWithHint,
           status: 'backlog',
           priority: route.priority,
           assigned_to: route.assignee,
@@ -1795,8 +1801,8 @@
     }
 
     if (status) status.textContent = persisted
-      ? `✅ Routed to ${route.assignee} and added to task board.`
-      : `⚠️ Routed to ${route.assignee} and saved locally. Supabase write failed${errorHint ? `: ${errorHint}` : ''}`;
+      ? `✅ Sent to Conrad. Suggested delegate: ${route.suggestedAssignee}.`
+      : `⚠️ Sent to Conrad (saved locally). Suggested delegate: ${route.suggestedAssignee}. Supabase write failed${errorHint ? `: ${errorHint}` : ''}`;
 
     if (typeof loadTasks === 'function') loadTasks();
   }
