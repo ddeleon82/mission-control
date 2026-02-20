@@ -1288,17 +1288,23 @@
   }
 
   // ═══ Usage Energy Bar ═══
-  // Snapshot values can be updated from CLI/status automation later.
-  const ENERGY_SNAPSHOT = {
+  // Starts with snapshot fallback; attempts live sync from local OpenClaw status endpoint.
+  const ENERGY_STATE = {
     windowPct: 94,
-    windowResetAt: Date.now() + ((4 * 60 + 51) * 60 * 1000), // 4h51m
+    windowResetAt: Date.now() + ((4 * 60 + 51) * 60 * 1000), // 4h51m fallback
     dayPct: 98,
-    dayResetAt: Date.now() + ((6 * 24 + 23) * 60 * 60 * 1000) // 6d23h
+    dayResetAt: Date.now() + ((6 * 24 + 23) * 60 * 60 * 1000), // 6d23h fallback
+    source: 'snapshot',
+    lastSyncAt: null
   };
 
   function initEnergyBar() {
     renderEnergyBar();
+    // Refresh countdown continuously.
     setInterval(renderEnergyBar, 1000);
+    // Try initial live sync immediately, then every 60s.
+    syncEnergyFromOpenClaw();
+    setInterval(syncEnergyFromOpenClaw, 60000);
   }
 
   function formatCountdown(ms) {
@@ -1314,8 +1320,8 @@
 
   function renderEnergyBar() {
     const now = Date.now();
-    const windowMsLeft = ENERGY_SNAPSHOT.windowResetAt - now;
-    const dayMsLeft = ENERGY_SNAPSHOT.dayResetAt - now;
+    const windowMsLeft = ENERGY_STATE.windowResetAt - now;
+    const dayMsLeft = ENERGY_STATE.dayResetAt - now;
 
     const windowPctEl = document.getElementById('energyWindowPct');
     const dayPctEl = document.getElementById('energyDayPct');
@@ -1325,26 +1331,92 @@
     const dayBar = document.getElementById('energyDayBar');
     const updated = document.getElementById('energyUpdated');
 
-    if (windowPctEl) windowPctEl.textContent = `${ENERGY_SNAPSHOT.windowPct}%`;
-    if (dayPctEl) dayPctEl.textContent = `${ENERGY_SNAPSHOT.dayPct}%`;
+    if (windowPctEl) windowPctEl.textContent = `${ENERGY_STATE.windowPct}%`;
+    if (dayPctEl) dayPctEl.textContent = `${ENERGY_STATE.dayPct}%`;
     if (windowResetEl) windowResetEl.textContent = formatCountdown(windowMsLeft);
     if (dayResetEl) dayResetEl.textContent = formatCountdown(dayMsLeft);
-    if (windowBar) windowBar.style.width = `${Math.max(0, Math.min(100, ENERGY_SNAPSHOT.windowPct))}%`;
-    if (dayBar) dayBar.style.width = `${Math.max(0, Math.min(100, ENERGY_SNAPSHOT.dayPct))}%`;
+    if (windowBar) windowBar.style.width = `${Math.max(0, Math.min(100, ENERGY_STATE.windowPct))}%`;
+    if (dayBar) dayBar.style.width = `${Math.max(0, Math.min(100, ENERGY_STATE.dayPct))}%`;
     if (updated) {
       const t = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-      updated.textContent = `updated ${t}`;
+      const source = ENERGY_STATE.source === 'live' ? 'live' : 'snapshot';
+      updated.textContent = `${source} ${t}`;
     }
 
     // Reset cycle handling
     if (windowMsLeft <= 0) {
-      ENERGY_SNAPSHOT.windowPct = 100;
-      ENERGY_SNAPSHOT.windowResetAt = now + (5 * 60 * 60 * 1000);
+      ENERGY_STATE.windowPct = 100;
+      ENERGY_STATE.windowResetAt = now + (5 * 60 * 60 * 1000);
     }
     if (dayMsLeft <= 0) {
-      ENERGY_SNAPSHOT.dayPct = 100;
-      ENERGY_SNAPSHOT.dayResetAt = now + (7 * 24 * 60 * 60 * 1000);
+      ENERGY_STATE.dayPct = 100;
+      ENERGY_STATE.dayResetAt = now + (7 * 24 * 60 * 60 * 1000);
     }
+  }
+
+  function parseDurationToMs(text) {
+    if (!text || typeof text !== 'string') return null;
+    let total = 0;
+    const day = text.match(/(\d+)d/);
+    const hr = text.match(/(\d+)h/);
+    const min = text.match(/(\d+)m/);
+    const sec = text.match(/(\d+)s/);
+    if (day) total += Number(day[1]) * 86400;
+    if (hr) total += Number(hr[1]) * 3600;
+    if (min) total += Number(min[1]) * 60;
+    if (sec) total += Number(sec[1]);
+    return total > 0 ? total * 1000 : null;
+  }
+
+  function extractEnergyFromStatusText(text) {
+    if (!text || typeof text !== 'string') return null;
+    const fiveHour = text.match(/5h\s+(\d+)%\s+left\s+⏱([^·\n]+)/);
+    const day = text.match(/Day\s+(\d+)%\s+left\s+⏱([^\n]+)/);
+    if (!fiveHour || !day) return null;
+
+    const fiveHourPct = Number(fiveHour[1]);
+    const dayPct = Number(day[1]);
+    const fiveHourMs = parseDurationToMs(fiveHour[2].trim());
+    const dayMs = parseDurationToMs(day[2].trim());
+    if (!Number.isFinite(fiveHourPct) || !Number.isFinite(dayPct) || !fiveHourMs || !dayMs) return null;
+
+    return {
+      windowPct: fiveHourPct,
+      dayPct,
+      windowResetAt: Date.now() + fiveHourMs,
+      dayResetAt: Date.now() + dayMs
+    };
+  }
+
+  async function syncEnergyFromOpenClaw() {
+    // Try local gateway status endpoints. Works when dashboard is opened on the same machine.
+    const candidates = [
+      'http://127.0.0.1:18789/status',
+      '/status'
+    ];
+
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) continue;
+        const text = await res.text();
+        const parsed = extractEnergyFromStatusText(text);
+        if (!parsed) continue;
+
+        ENERGY_STATE.windowPct = parsed.windowPct;
+        ENERGY_STATE.dayPct = parsed.dayPct;
+        ENERGY_STATE.windowResetAt = parsed.windowResetAt;
+        ENERGY_STATE.dayResetAt = parsed.dayResetAt;
+        ENERGY_STATE.source = 'live';
+        ENERGY_STATE.lastSyncAt = Date.now();
+        renderEnergyBar();
+        return;
+      } catch (e) {
+        // Keep trying candidates; fallback snapshot remains.
+      }
+    }
+
+    ENERGY_STATE.source = 'snapshot';
   }
 
   function updateClock() {
