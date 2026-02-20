@@ -2013,5 +2013,60 @@
   } catch(e) {}
 </script>
 
+<script>
+// Emergency hard-fix: independent energy sync loop (does not depend on dashboard init order)
+(function(){
+  const SUPABASE_URL='https://sgcynfmkhqowdboweahz.supabase.co';
+  const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnY3luZm1raHFvd2Rib3dlYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3Nzg0OTYsImV4cCI6MjA4NDM1NDQ5Nn0.adsPZ0U_Ce2oM7MWaczBN9sqjVGhFfaht01eBktD6As';
+  let state={wp:100,dp:100,wr:Date.now()+5*3600e3,dr:Date.now()+7*86400e3,source:'snapshot'};
+
+  function msFrom(text){
+    if(!text) return null;
+    let t=0; const d=text.match(/(\d+)d/), h=text.match(/(\d+)h/), m=text.match(/(\d+)m/), s=text.match(/(\d+)s/);
+    if(d) t+=+d[1]*86400; if(h) t+=+h[1]*3600; if(m) t+=+m[1]*60; if(s) t+=+s[1];
+    return t? t*1000 : null;
+  }
+  function fmt(ms){
+    if(ms<=0) return '00:00:00'; const x=Math.floor(ms/1000); const d=Math.floor(x/86400), h=Math.floor((x%86400)/3600), m=Math.floor((x%3600)/60), s=x%60;
+    if(d>0) return `${d}d ${String(h).padStart(2,'0')}h`;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  function render(){
+    const wp=document.getElementById('energyWindowPct'), dp=document.getElementById('energyDayPct');
+    const wr=document.getElementById('energyWindowReset'), dr=document.getElementById('energyDayReset');
+    const wb=document.getElementById('energyWindowBar'), db=document.getElementById('energyDayBar');
+    const up=document.getElementById('energyUpdated');
+    if(!wp||!dp||!wr||!dr||!wb||!db||!up) return;
+    const now=Date.now();
+    wp.textContent=`${state.wp}%`; dp.textContent=`${state.dp}%`;
+    wr.textContent=fmt(state.wr-now); dr.textContent=fmt(state.dr-now);
+    wb.style.width=`${Math.max(0,Math.min(100,state.wp))}%`; db.style.width=`${Math.max(0,Math.min(100,state.dp))}%`;
+    const t=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    up.textContent=`${state.source} ${t}`;
+  }
+  async function pull(){
+    try{
+      const u=`${SUPABASE_URL}/rest/v1/agent_status?select=current_task,last_heartbeat&id=eq.usage&order=last_heartbeat.desc&limit=1`;
+      const r=await fetch(u,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
+      if(!r.ok) throw new Error('rest '+r.status);
+      const rows=await r.json();
+      const txt=rows?.[0]?.current_task||'';
+      const wp=txt.match(/window_pct=(\d+)/), dp=txt.match(/day_pct=(\d+)/), wl=txt.match(/window_left=([^|]+)/), dl=txt.match(/day_left=([^|]+)/);
+      if(wp&&dp&&wl&&dl){
+        const wms=msFrom(wl[1]), dms=msFrom(dl[1]);
+        if(wms&&dms){ state={wp:+wp[1],dp:+dp[1],wr:Date.now()+wms,dr:Date.now()+dms,source:'supabase-rest'}; }
+      }
+    }catch(e){ state.source='snapshot'; }
+    render();
+  }
+
+  // bind refresh button if present
+  document.addEventListener('click', (e)=>{ if(e.target && e.target.id==='energyRefreshBtn') pull(); });
+  setInterval(render,1000);
+  setInterval(pull,60000);
+  pull();
+})();
+</script>
+
 </body>
 </html>
