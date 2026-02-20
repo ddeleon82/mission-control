@@ -1506,7 +1506,7 @@
     if (dayBar) dayBar.style.width = `${Math.max(0, Math.min(100, ENERGY_STATE.dayPct))}%`;
     if (updated) {
       const t = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-      const source = ENERGY_STATE.source === 'live' ? 'live' : 'snapshot';
+      const source = ENERGY_STATE.source || 'snapshot';
       updated.textContent = `${source} ${t}`;
     }
 
@@ -1555,8 +1555,55 @@
     };
   }
 
+  function extractEnergyFromUsageRow(text) {
+    // Format: USAGE|window_pct=91|window_left=2h39m|day_pct=97|day_left=6d21h
+    if (!text || typeof text !== 'string' || !text.startsWith('USAGE|')) return null;
+    const wp = text.match(/window_pct=(\d+)/);
+    const wl = text.match(/window_left=([^|]+)/);
+    const dp = text.match(/day_pct=(\d+)/);
+    const dl = text.match(/day_left=([^|]+)/);
+    if (!wp || !wl || !dp || !dl) return null;
+    const windowPct = Number(wp[1]);
+    const dayPct = Number(dp[1]);
+    const windowMs = parseDurationToMs(wl[1]);
+    const dayMs = parseDurationToMs(dl[1]);
+    if (!Number.isFinite(windowPct) || !Number.isFinite(dayPct) || !windowMs || !dayMs) return null;
+    return {
+      windowPct,
+      dayPct,
+      windowResetAt: Date.now() + windowMs,
+      dayResetAt: Date.now() + dayMs
+    };
+  }
+
   async function syncEnergyFromOpenClaw(manual = false) {
-    // Try local gateway status endpoints. Works when dashboard is opened on the same machine.
+    // Preferred path: Supabase usage row (works on GitHub Pages, no local CORS issues)
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from('agent_status')
+          .select('current_task,last_heartbeat')
+          .eq('id', 'usage')
+          .limit(1)
+          .maybeSingle();
+
+        const parsed = extractEnergyFromUsageRow(data?.current_task || '');
+        if (parsed) {
+          ENERGY_STATE.windowPct = parsed.windowPct;
+          ENERGY_STATE.dayPct = parsed.dayPct;
+          ENERGY_STATE.windowResetAt = parsed.windowResetAt;
+          ENERGY_STATE.dayResetAt = parsed.dayResetAt;
+          ENERGY_STATE.source = 'supabase';
+          ENERGY_STATE.lastSyncAt = Date.now();
+          renderEnergyBar();
+          return;
+        }
+      } catch (e) {
+        // fall through
+      }
+    }
+
+    // Fallback: local gateway status endpoints (works when opened from same machine + allowed CORS)
     const candidates = [
       'http://127.0.0.1:18789/status',
       '/status'
