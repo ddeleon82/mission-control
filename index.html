@@ -1589,23 +1589,25 @@
     // Preferred path: Supabase usage row (works on GitHub Pages, no local CORS issues)
     if (supabase) {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('agent_status')
           .select('current_task,last_heartbeat')
           .eq('id', 'usage')
-          .limit(1)
-          .maybeSingle();
+          .order('last_heartbeat', { ascending: false })
+          .limit(1);
 
-        const parsed = extractEnergyFromUsageRow(data?.current_task || '');
-        if (parsed) {
-          ENERGY_STATE.windowPct = parsed.windowPct;
-          ENERGY_STATE.dayPct = parsed.dayPct;
-          ENERGY_STATE.windowResetAt = parsed.windowResetAt;
-          ENERGY_STATE.dayResetAt = parsed.dayResetAt;
-          ENERGY_STATE.source = 'supabase';
-          ENERGY_STATE.lastSyncAt = Date.now();
-          renderEnergyBar();
-          return;
+        if (!error && data && data.length) {
+          const parsed = extractEnergyFromUsageRow(data[0]?.current_task || '');
+          if (parsed) {
+            ENERGY_STATE.windowPct = parsed.windowPct;
+            ENERGY_STATE.dayPct = parsed.dayPct;
+            ENERGY_STATE.windowResetAt = parsed.windowResetAt;
+            ENERGY_STATE.dayResetAt = parsed.dayResetAt;
+            ENERGY_STATE.source = 'supabase';
+            ENERGY_STATE.lastSyncAt = Date.now();
+            renderEnergyBar();
+            return;
+          }
         }
       } catch (e) {
         // fall through
