@@ -1595,7 +1595,35 @@
   }
 
   async function syncEnergyFromOpenClaw(manual = false) {
-    // Preferred path: Supabase usage row (works on GitHub Pages, no local CORS issues)
+    // Preferred path: direct Supabase REST (no SDK dependency)
+    try {
+      const restUrl = `${SUPABASE_URL}/rest/v1/agent_status?select=current_task,last_heartbeat&id=eq.usage&order=last_heartbeat.desc&limit=1`;
+      const res = await fetch(restUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        const parsed = extractEnergyFromUsageRow(rows?.[0]?.current_task || '');
+        if (parsed) {
+          ENERGY_STATE.windowPct = parsed.windowPct;
+          ENERGY_STATE.dayPct = parsed.dayPct;
+          ENERGY_STATE.windowResetAt = parsed.windowResetAt;
+          ENERGY_STATE.dayResetAt = parsed.dayResetAt;
+          ENERGY_STATE.source = 'supabase-rest';
+          ENERGY_STATE.lastSyncAt = Date.now();
+          renderEnergyBar();
+          return;
+        }
+      }
+    } catch (e) {
+      // fall through
+    }
+
+    // Secondary path: Supabase SDK (if available)
     const sb0 = getSupabase();
     if (sb0) {
       try {
@@ -1613,7 +1641,7 @@
             ENERGY_STATE.dayPct = parsed.dayPct;
             ENERGY_STATE.windowResetAt = parsed.windowResetAt;
             ENERGY_STATE.dayResetAt = parsed.dayResetAt;
-            ENERGY_STATE.source = 'supabase';
+            ENERGY_STATE.source = 'supabase-sdk';
             ENERGY_STATE.lastSyncAt = Date.now();
             renderEnergyBar();
             return;
