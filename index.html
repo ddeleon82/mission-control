@@ -1416,6 +1416,15 @@
   const PASSWORD_HASH = 'f4127ad448fa57d63edf47ee143f43a56b6357d7d81f76260e9f05e301643ecb';
 
   let supabase;
+  function getSupabase() {
+    if (supabase) return supabase;
+    try {
+      if (window.supabase && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch(e) {}
+    return supabase || null;
+  }
   try {
     supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
   } catch(e) { console.warn('Supabase init failed:', e); }
@@ -1587,9 +1596,10 @@
 
   async function syncEnergyFromOpenClaw(manual = false) {
     // Preferred path: Supabase usage row (works on GitHub Pages, no local CORS issues)
-    if (supabase) {
+    const sb0 = getSupabase();
+    if (sb0) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await sb0
           .from('agent_status')
           .select('current_task,last_heartbeat')
           .eq('id', 'usage')
@@ -1761,7 +1771,8 @@
 
     let persisted = false;
     let errorHint = '';
-    if (supabase) {
+    const sb1 = getSupabase();
+    if (sb1) {
       try {
         const payload = {
           title: text.slice(0, 110),
@@ -1770,7 +1781,7 @@
           priority: route.priority,
           assigned_to: route.assignee
         };
-        const { error } = await supabase.from('tasks').insert(payload);
+        const { error } = await sb1.from('tasks').insert(payload);
         if (!error) persisted = true;
         else errorHint = error.message || 'insert failed';
       } catch (e) {
@@ -1824,9 +1835,10 @@
 
   // ═══ Supabase Data ═══
   async function loadSupabaseData() {
-    if (!supabase) return;
+    const sb2 = getSupabase();
+    if (!sb2) return;
     try {
-      const { data: status } = await supabase
+      const { data: status } = await sb2
         .from('agent_status')
         .select('*')
         .order('last_heartbeat', { ascending: false })
@@ -1841,7 +1853,7 @@
         });
       }
 
-      const { data: tasks } = await supabase
+      const { data: tasks } = await sb2
         .from('tasks')
         .select('*')
         .in('status', ['backlog','in-progress']);
@@ -1856,7 +1868,8 @@
   }
 
   // ═══ Real-time ═══
-  if (supabase) supabase
+  const sb3 = getSupabase();
+  if (sb3) sb3
     .channel('mc-updates')
     .on('postgres_changes', { event:'*', schema:'public', table:'agent_status' }, () => loadSupabaseData())
     .subscribe();
@@ -1870,9 +1883,10 @@
 
     let tasks = [];
 
-    if (supabase) {
+    const sb4 = getSupabase();
+    if (sb4) {
       try {
-        const { data } = await supabase
+        const { data } = await sb4
           .from('tasks')
           .select('*')
           .order('created_at', { ascending: false });
@@ -1931,9 +1945,10 @@
   }
 
   // Load tasks on init
-  if (supabase) {
+  const sb5 = getSupabase();
+  if (sb5) {
     loadTasks();
-    supabase
+    sb5
       .channel('mc-tasks')
       .on('postgres_changes', { event:'*', schema:'public', table:'tasks' }, () => loadTasks())
       .subscribe();
