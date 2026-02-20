@@ -490,12 +490,21 @@
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
           <textarea id="cooIntakeInput" placeholder="Add a task by text or voice. Example: 'Follow up with Living Leadership today and prep a confidence script.'" style="flex:1;min-height:88px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text-primary);font-size:13px;resize:vertical"></textarea>
-          <div style="display:flex;flex-direction:column;gap:8px;min-width:150px">
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:190px">
+            <select id="cooRouteOverride" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:10px;border-radius:8px">
+              <option value="auto">Auto-route (recommended)</option>
+              <option value="Conrad">Conrad · Chief of Staff</option>
+              <option value="Martin">Martin · Chief Hustle Officer</option>
+              <option value="Vale">Vale · Chief Mindset Officer</option>
+              <option value="Tech Agent">Tech Agent · CTO</option>
+              <option value="Life Agent">Life Agent · Chief Life Officer</option>
+            </select>
             <button id="cooVoiceBtn" style="background:rgba(96,165,250,.18);border:1px solid rgba(96,165,250,.3);color:#dbeafe;padding:10px;border-radius:8px;cursor:pointer">🎙️ Voice Input</button>
             <button id="cooRouteBtn" style="background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.35);color:#dcfce7;padding:10px;border-radius:8px;cursor:pointer">Route Task</button>
           </div>
         </div>
-        <div id="cooRouteStatus" style="margin-top:10px;font-size:12px;color:var(--text-muted)">Ready.</div>
+        <div id="cooRouteHint" style="margin-top:8px;font-size:12px;color:var(--text-muted)">Suggested route: Conrad (auto)</div>
+        <div id="cooRouteStatus" style="margin-top:6px;font-size:12px;color:var(--text-muted)">Ready.</div>
         <div id="cooRouteLog" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
       </div>
 
@@ -1633,11 +1642,43 @@
     ENERGY_STATE.source = 'snapshot';
   }
 
+  const ROUTE_MAP = {
+    'Conrad': { role: 'Chief of Staff', priority: 'medium' },
+    'Martin': { role: 'Chief Hustle Officer', priority: 'high' },
+    'Vale': { role: 'Chief Mindset Officer', priority: 'medium' },
+    'Tech Agent': { role: 'CTO', priority: 'high' },
+    'Life Agent': { role: 'Chief Life Officer', priority: 'low' }
+  };
+
   function initCOORouter() {
     const input = document.getElementById('cooIntakeInput');
     const routeBtn = document.getElementById('cooRouteBtn');
     const voiceBtn = document.getElementById('cooVoiceBtn');
+    const override = document.getElementById('cooRouteOverride');
     const status = document.getElementById('cooRouteStatus');
+
+    const refreshHint = () => {
+      const text = (input?.value || '').trim();
+      const hint = document.getElementById('cooRouteHint');
+      if (!hint) return;
+      if (!text) { hint.textContent = 'Suggested route: Conrad (auto)'; return; }
+      const suggested = inferRoute(text);
+      const forced = override?.value || 'auto';
+      if (forced !== 'auto') {
+        hint.textContent = `Forced route: ${forced} (override active)`;
+      } else {
+        hint.textContent = `Suggested route: ${suggested.assignee} (${suggested.role})`;
+      }
+    };
+
+    if (input && !input.dataset.bound) {
+      input.dataset.bound = '1';
+      input.addEventListener('input', refreshHint);
+    }
+    if (override && !override.dataset.bound) {
+      override.dataset.bound = '1';
+      override.addEventListener('change', refreshHint);
+    }
 
     if (routeBtn && !routeBtn.dataset.bound) {
       routeBtn.dataset.bound = '1';
@@ -1647,8 +1688,10 @@
           if (status) status.textContent = 'Add a task first.';
           return;
         }
-        await routeCOOTask(text);
+        await routeCOOTask(text, override?.value || 'auto');
         if (input) input.value = '';
+        if (override) override.value = 'auto';
+        refreshHint();
       });
     }
 
@@ -1668,31 +1711,48 @@
         recog.onresult = (ev) => {
           const transcript = ev.results?.[0]?.[0]?.transcript || '';
           if (input) input.value = transcript;
-          if (status) status.textContent = 'Voice captured. Review and click Route Task.';
+          refreshHint();
+          if (status) status.textContent = 'Voice captured. Review route, then click Route Task.';
         };
         recog.onerror = () => { if (status) status.textContent = 'Voice capture failed.'; };
         recog.start();
       });
     }
+
+    refreshHint();
   }
 
   function inferRoute(text) {
     const t = text.toLowerCase();
-    if (/(ad|pipeline|lead|outreach|follow up|sales|close|client)/.test(t)) return { assignee: 'Martin', role: 'Chief Hustle Officer', priority: 'high' };
-    if (/(mindset|confidence|stress|energy|clarity|focus|mental|burnout)/.test(t)) return { assignee: 'Vale', role: 'Chief Mindset Officer', priority: 'medium' };
-    if (/(code|bug|dashboard|supabase|n8n|api|deploy|automation|build)/.test(t)) return { assignee: 'Tech Agent', role: 'CTO', priority: 'high' };
-    if (/(calendar|brief|organize|plan|ops|route|coo|admin)/.test(t)) return { assignee: 'Conrad', role: 'Chief of Staff', priority: 'medium' };
-    return { assignee: 'Conrad', role: 'Chief of Staff', priority: 'low' };
+    const scores = { 'Conrad': 0, 'Martin': 0, 'Vale': 0, 'Tech Agent': 0, 'Life Agent': 0 };
+
+    if (/(ad build|ad set|creative|campaign|lead|outreach|follow up|sales|close|prospect|pipeline|offer|client)/.test(t)) scores['Martin'] += 3;
+    if (/(mindset|confidence|stress|energy|clarity|focus|mental|burnout|overwhelm|motivation)/.test(t)) scores['Vale'] += 3;
+    if (/(code|bug|dashboard|supabase|n8n|api|deploy|automation|build|script|repo|github)/.test(t)) scores['Tech Agent'] += 3;
+    if (/(calendar|brief|organize|plan|ops|route|coo|admin|prioritize|schedule|email cleanup|inbox)/.test(t)) scores['Conrad'] += 3;
+    if (/(health|workout|family|sleep|nutrition|recovery|boxing)/.test(t)) scores['Life Agent'] += 2;
+
+    // default bias to COO for ambiguous tasks
+    scores['Conrad'] += 1;
+
+    const assignee = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+    const routeMeta = ROUTE_MAP[assignee] || ROUTE_MAP['Conrad'];
+    return { assignee, role: routeMeta.role, priority: routeMeta.priority };
   }
 
-  async function routeCOOTask(text) {
+  async function routeCOOTask(text, forcedAssignee = 'auto') {
     const status = document.getElementById('cooRouteStatus');
     const log = document.getElementById('cooRouteLog');
-    const route = inferRoute(text);
+    let route = inferRoute(text);
+
+    if (forcedAssignee !== 'auto' && ROUTE_MAP[forcedAssignee]) {
+      route = { assignee: forcedAssignee, role: ROUTE_MAP[forcedAssignee].role, priority: ROUTE_MAP[forcedAssignee].priority };
+    }
 
     if (status) status.textContent = `Routing to ${route.assignee}…`;
 
     let persisted = false;
+    let errorHint = '';
     if (supabase) {
       try {
         const payload = {
@@ -1704,7 +1764,10 @@
         };
         const { error } = await supabase.from('tasks').insert(payload);
         if (!error) persisted = true;
-      } catch (e) {}
+        else errorHint = error.message || 'insert failed';
+      } catch (e) {
+        errorHint = e?.message || 'network failure';
+      }
     }
 
     if (log) {
@@ -1715,7 +1778,10 @@
       while (log.children.length > 6) log.removeChild(log.lastChild);
     }
 
-    if (status) status.textContent = persisted ? `✅ Routed to ${route.assignee} and added to task board.` : `✅ Routed to ${route.assignee} (local only).`;
+    if (status) status.textContent = persisted
+      ? `✅ Routed to ${route.assignee} and added to task board.`
+      : `⚠️ Routed to ${route.assignee} (UI only). Supabase write failed${errorHint ? `: ${errorHint}` : ''}`;
+
     if (typeof loadTasks === 'function') loadTasks();
   }
 
