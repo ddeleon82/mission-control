@@ -151,6 +151,18 @@
     .summary-stat .value{font-size:24px;font-weight:700;letter-spacing:-0.5px}
     .summary-stat .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
 
+    /* ═══ Energy Bar ═══ */
+    .energy-card{padding:14px 16px}
+    .energy-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .energy-title{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted)}
+    .energy-updated{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+    .energy-row{margin-top:8px}
+    .energy-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:4px}
+    .energy-track{height:8px;border-radius:999px;background:var(--bg-elevated);overflow:hidden;border:1px solid var(--border)}
+    .energy-fill{height:100%;transition:width .3s ease}
+    .energy-fill.window{background:linear-gradient(90deg,var(--accent-blue),#34d399)}
+    .energy-fill.day{background:linear-gradient(90deg,var(--accent-purple),#60a5fa)}
+
     /* ═══ Agent Cards ═══ */
     .agent-card{position:relative;overflow:hidden}
     .agent-card .accent-bar{position:absolute;top:0;left:0;right:0;height:2px}
@@ -442,6 +454,27 @@
           <div class="label">System Health</div>
           <div class="value" style="color:var(--accent-green)">100%</div>
           <div class="sub">all systems go</div>
+        </div>
+      </div>
+
+      <div class="card energy-card fade-in" style="margin-bottom:20px">
+        <div class="energy-head">
+          <div class="energy-title">⚡ Usage Energy</div>
+          <div class="energy-updated" id="energyUpdated">live</div>
+        </div>
+        <div class="energy-row">
+          <div class="energy-meta">
+            <span>5h Window: <strong id="energyWindowPct">--%</strong></span>
+            <span>Reset in <span id="energyWindowReset">--:--:--</span></span>
+          </div>
+          <div class="energy-track"><div class="energy-fill window" id="energyWindowBar" style="width:0%"></div></div>
+        </div>
+        <div class="energy-row">
+          <div class="energy-meta">
+            <span>Day Window: <strong id="energyDayPct">--%</strong></span>
+            <span>Reset in <span id="energyDayReset">--:--:--</span></span>
+          </div>
+          <div class="energy-track"><div class="energy-fill day" id="energyDayBar" style="width:0%"></div></div>
         </div>
       </div>
 
@@ -1250,7 +1283,68 @@
     updateClock();
     setInterval(updateClock, 1000);
     setBriefDate();
+    initEnergyBar();
     loadSupabaseData();
+  }
+
+  // ═══ Usage Energy Bar ═══
+  // Snapshot values can be updated from CLI/status automation later.
+  const ENERGY_SNAPSHOT = {
+    windowPct: 94,
+    windowResetAt: Date.now() + ((4 * 60 + 51) * 60 * 1000), // 4h51m
+    dayPct: 98,
+    dayResetAt: Date.now() + ((6 * 24 + 23) * 60 * 60 * 1000) // 6d23h
+  };
+
+  function initEnergyBar() {
+    renderEnergyBar();
+    setInterval(renderEnergyBar, 1000);
+  }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return '00:00:00';
+    const total = Math.floor(ms / 1000);
+    const d = Math.floor(total / 86400);
+    const h = Math.floor((total % 86400) / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (d > 0) return `${d}d ${String(h).padStart(2,'0')}h`;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function renderEnergyBar() {
+    const now = Date.now();
+    const windowMsLeft = ENERGY_SNAPSHOT.windowResetAt - now;
+    const dayMsLeft = ENERGY_SNAPSHOT.dayResetAt - now;
+
+    const windowPctEl = document.getElementById('energyWindowPct');
+    const dayPctEl = document.getElementById('energyDayPct');
+    const windowResetEl = document.getElementById('energyWindowReset');
+    const dayResetEl = document.getElementById('energyDayReset');
+    const windowBar = document.getElementById('energyWindowBar');
+    const dayBar = document.getElementById('energyDayBar');
+    const updated = document.getElementById('energyUpdated');
+
+    if (windowPctEl) windowPctEl.textContent = `${ENERGY_SNAPSHOT.windowPct}%`;
+    if (dayPctEl) dayPctEl.textContent = `${ENERGY_SNAPSHOT.dayPct}%`;
+    if (windowResetEl) windowResetEl.textContent = formatCountdown(windowMsLeft);
+    if (dayResetEl) dayResetEl.textContent = formatCountdown(dayMsLeft);
+    if (windowBar) windowBar.style.width = `${Math.max(0, Math.min(100, ENERGY_SNAPSHOT.windowPct))}%`;
+    if (dayBar) dayBar.style.width = `${Math.max(0, Math.min(100, ENERGY_SNAPSHOT.dayPct))}%`;
+    if (updated) {
+      const t = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+      updated.textContent = `updated ${t}`;
+    }
+
+    // Reset cycle handling
+    if (windowMsLeft <= 0) {
+      ENERGY_SNAPSHOT.windowPct = 100;
+      ENERGY_SNAPSHOT.windowResetAt = now + (5 * 60 * 60 * 1000);
+    }
+    if (dayMsLeft <= 0) {
+      ENERGY_SNAPSHOT.dayPct = 100;
+      ENERGY_SNAPSHOT.dayResetAt = now + (7 * 24 * 60 * 60 * 1000);
+    }
   }
 
   function updateClock() {
