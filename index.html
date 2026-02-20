@@ -432,8 +432,8 @@
       <div class="summary-bar fade-in">
         <div class="summary-stat">
           <div class="label">Agents Online</div>
-          <div class="value" style="color:var(--accent-green)">6</div>
-          <div class="sub">of 6 deployed</div>
+          <div class="value" style="color:var(--accent-green)">8</div>
+          <div class="sub">of 8 deployed</div>
         </div>
         <div class="summary-stat">
           <div class="label">Tasks in Queue</div>
@@ -495,9 +495,11 @@
               <option value="auto">Auto-route (recommended)</option>
               <option value="Conrad">Conrad · Chief of Staff</option>
               <option value="Martin">Martin · Chief Hustle Officer</option>
-              <option value="Vale">Vale · Chief Mindset Officer</option>
+              <option value="Vale">Vale · Chief Relocation Officer</option>
               <option value="Tech Agent">Tech Agent · CTO</option>
               <option value="Life Agent">Life Agent · Chief Life Officer</option>
+              <option value="Nemo">Nemo · Chief Research Officer</option>
+              <option value="Atlas">Atlas · Chief Opportunity Officer</option>
             </select>
             <button id="cooVoiceBtn" style="background:rgba(96,165,250,.18);border:1px solid rgba(96,165,250,.3);color:#dbeafe;padding:10px;border-radius:8px;cursor:pointer">🎙️ Voice Input</button>
             <button id="cooRouteBtn" style="background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.35);color:#dcfce7;padding:10px;border-radius:8px;cursor:pointer">Route Task</button>
@@ -512,7 +514,7 @@
         <!-- Agent Status Cards (compact) -->
         <div class="span-2">
           <div class="section-header">
-            <div class="section-title">Agent Status <span class="section-count">6</span></div>
+            <div class="section-title">Agent Status <span class="section-count">8</span></div>
           </div>
           <div class="grid-2">
             <!-- Conrad -->
@@ -640,7 +642,7 @@
               <div class="agent-avatar">🧠</div>
               <div class="agent-info">
                 <div class="agent-name">Vale</div>
-                <div class="agent-role">Chief Mindset Officer</div>
+                <div class="agent-role">Chief Relocation Officer</div>
               </div>
               <div class="agent-status"><span class="status-dot standby"></span>Listening</div>
             </div>
@@ -790,7 +792,7 @@
     <!-- ═══════════════ AGENTS PAGE ═══════════════ -->
     <div class="page" id="page-agents">
       <div class="section-header">
-        <div class="section-title">Agent Details <span class="section-count">6</span></div>
+        <div class="section-title">Agent Details <span class="section-count">8</span></div>
       </div>
 
       <!-- Dom Card -->
@@ -989,7 +991,7 @@
             <div class="agent-avatar">🧠</div>
             <div class="agent-info">
               <div class="agent-name">Vale</div>
-              <div class="agent-role">Chief Mindset Officer</div>
+              <div class="agent-role">Chief Relocation Officer</div>
             </div>
             <div class="agent-status"><span class="status-dot standby"></span>Listening</div>
           </div>
@@ -1282,7 +1284,17 @@
               <div class="org-node">
                 <div class="icon">🧠</div>
                 <div class="name">Vale</div>
-                <div class="title">Chief Mindset Officer</div>
+                <div class="title">Chief Relocation Officer</div>
+              </div>
+              <div class="org-node">
+                <div class="icon">🔎</div>
+                <div class="name">Nemo</div>
+                <div class="title">Chief Research Officer</div>
+              </div>
+              <div class="org-node">
+                <div class="icon">🛰️</div>
+                <div class="name">Atlas</div>
+                <div class="title">Chief Opportunity Officer</div>
               </div>
             </div>
           </div>
@@ -1685,9 +1697,11 @@
   const ROUTE_MAP = {
     'Conrad': { role: 'Chief of Staff', priority: 'medium' },
     'Martin': { role: 'Chief Hustle Officer', priority: 'high' },
-    'Vale': { role: 'Chief Mindset Officer', priority: 'medium' },
+    'Vale': { role: 'Chief Relocation Officer', priority: 'medium' },
     'Tech Agent': { role: 'CTO', priority: 'high' },
-    'Life Agent': { role: 'Chief Life Officer', priority: 'low' }
+    'Life Agent': { role: 'Chief Life Officer', priority: 'low' },
+    'Nemo': { role: 'Chief Research Officer', priority: 'medium' },
+    'Atlas': { role: 'Chief Opportunity Officer', priority: 'medium' }
   };
 
   function initCOORouter() {
@@ -1764,13 +1778,15 @@
 
   function inferRoute(text) {
     const t = text.toLowerCase();
-    const scores = { 'Conrad': 0, 'Martin': 0, 'Vale': 0, 'Tech Agent': 0, 'Life Agent': 0 };
+    const scores = { 'Conrad': 0, 'Martin': 0, 'Vale': 0, 'Tech Agent': 0, 'Life Agent': 0, 'Nemo': 0, 'Atlas': 0 };
 
     if (/(ad build|ad set|creative|campaign|lead|outreach|follow up|sales|close|prospect|pipeline|offer|client)/.test(t)) scores['Martin'] += 3;
-    if (/(mindset|confidence|stress|energy|clarity|focus|mental|burnout|overwhelm|motivation)/.test(t)) scores['Vale'] += 3;
+    if (/(relocation|spain|portugal|visa|school|international|move|moving|apostille|pet import|wife opportunity|danai career|neighborhood|housing abroad)/.test(t)) scores['Vale'] += 3;
     if (/(code|bug|dashboard|supabase|n8n|api|deploy|automation|build|script|repo|github)/.test(t)) scores['Tech Agent'] += 3;
     if (/(calendar|brief|organize|plan|ops|route|coo|admin|prioritize|schedule|email cleanup|inbox)/.test(t)) scores['Conrad'] += 3;
-    if (/(health|workout|family|sleep|nutrition|recovery|boxing)/.test(t)) scores['Life Agent'] += 2;
+    if (/(health|workout|family|sleep|nutrition|recovery|boxing|mindset|confidence|stress|energy|clarity|focus|mental|burnout|overwhelm|motivation)/.test(t)) scores['Life Agent'] += 2;
+    if (/(research|framework|benchmark|trend|competitor|intel|insight|study|case study|new tactic)/.test(t)) scores['Nemo'] += 3;
+    if (/(affiliate|tiktok|passive income|monetization|autonomous income|side income|experiment|arbitrage|content loop)/.test(t)) scores['Atlas'] += 3;
 
     // default bias to COO for ambiguous tasks
     scores['Conrad'] += 1;
