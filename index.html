@@ -2068,5 +2068,46 @@
 })();
 </script>
 
+<script>
+// Emergency interactivity hotfix: ensures tabs/tags/buttons remain clickable even if main init fails.
+(function(){
+  function switchPage(page){
+    if(!page) return;
+    const target=document.getElementById('page-'+page);
+    if(!target) return;
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const tab=document.querySelector(`.nav-tab[data-page="${page}"]`);
+    if(tab) tab.classList.add('active');
+    target.classList.add('active');
+    try{ history.replaceState(null,'','#'+page); }catch(e){}
+  }
+
+  // nav tabs
+  document.addEventListener('click', (e)=>{
+    const tab=e.target.closest('.nav-tab');
+    if(tab){ e.preventDefault(); switchPage(tab.dataset.page); return; }
+
+    // brief tags clickable filter/toggle
+    const tag=e.target.closest('.brief-tag');
+    if(tag){
+      e.preventDefault();
+      const label=(tag.textContent||'').trim().toLowerCase();
+      const rows=[...document.querySelectorAll('.brief-item')];
+      const active=tag.classList.toggle('active-filter');
+      document.querySelectorAll('.brief-tag').forEach(t=>{ if(t!==tag) t.classList.remove('active-filter'); });
+      if(active){
+        rows.forEach(r=>{ const hit=(r.textContent||'').toLowerCase().includes(label); r.style.display=hit?'':'none'; });
+      } else {
+        rows.forEach(r=> r.style.display='');
+      }
+    }
+  });
+
+  // hash restore on load
+  if(location.hash){ switchPage(location.hash.replace('#','')); }
+})();
+</script>
+
 </body>
 </html>
