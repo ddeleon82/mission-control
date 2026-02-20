@@ -460,7 +460,10 @@
       <div class="card energy-card fade-in" style="margin-bottom:20px">
         <div class="energy-head">
           <div class="energy-title">⚡ Usage Energy</div>
-          <div class="energy-updated" id="energyUpdated">live</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button id="energyRefreshBtn" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-secondary);font-size:10px;padding:4px 8px;border-radius:999px;cursor:pointer">↻ Refresh</button>
+            <div class="energy-updated" id="energyUpdated">live</div>
+          </div>
         </div>
         <div class="energy-row">
           <div class="energy-meta">
@@ -1305,6 +1308,17 @@
     // Try initial live sync immediately, then every 60s.
     syncEnergyFromOpenClaw();
     setInterval(syncEnergyFromOpenClaw, 60000);
+
+    const btn = document.getElementById('energyRefreshBtn');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '…';
+        await syncEnergyFromOpenClaw(true);
+        btn.textContent = '↻ Refresh';
+        btn.disabled = false;
+      });
+    }
   }
 
   function formatCountdown(ms) {
@@ -1388,7 +1402,7 @@
     };
   }
 
-  async function syncEnergyFromOpenClaw() {
+  async function syncEnergyFromOpenClaw(manual = false) {
     // Try local gateway status endpoints. Works when dashboard is opened on the same machine.
     const candidates = [
       'http://127.0.0.1:18789/status',
