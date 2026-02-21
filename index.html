@@ -432,8 +432,8 @@
       <div class="summary-bar fade-in">
         <div class="summary-stat">
           <div class="label">Agents Online</div>
-          <div class="value" style="color:var(--accent-green)">8</div>
-          <div class="sub">of 8 deployed</div>
+          <div class="value" style="color:var(--accent-green)">10</div>
+          <div class="sub">of 10 deployed</div>
         </div>
         <div class="summary-stat">
           <div class="label">Tasks in Queue</div>
@@ -500,6 +500,8 @@
               <option value="Tony">Tony · Chief Life Officer</option>
               <option value="Nemo">Nemo · Chief Research Officer</option>
               <option value="Atlas">Atlas · Chief Opportunity Officer</option>
+              <option value="Pei-Ling">Pei-Ling · Creative Strategist</option>
+              <option value="Marly">Marly · Media Manager</option>
             </select>
             <button id="cooVoiceBtn" style="background:rgba(96,165,250,.18);border:1px solid rgba(96,165,250,.3);color:#dbeafe;padding:10px;border-radius:8px;cursor:pointer">🎙️ Voice Input</button>
             <button id="cooRouteBtn" style="background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.35);color:#dcfce7;padding:10px;border-radius:8px;cursor:pointer">Route Task</button>
@@ -514,7 +516,7 @@
         <!-- Agent Status Cards (compact) -->
         <div class="span-2">
           <div class="section-header">
-            <div class="section-title">Agent Status <span class="section-count">8</span></div>
+            <div class="section-title">Agent Status <span class="section-count">10</span></div>
           </div>
           <div class="grid-2">
             <!-- Conrad -->
@@ -654,6 +656,54 @@
           <div class="agent-meta">
             <div class="meta-item"><div class="num">MVP</div><div class="lbl">Stage</div></div>
             <div class="meta-item"><div class="num">Low Risk</div><div class="lbl">Mode</div></div>
+            <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pei-Ling -->
+      <div class="card card-sm agent-card role-sales">
+        <div class="accent-bar"></div>
+        <div class="agent-header">
+          <div class="agent-avatar">🎬</div>
+          <div class="agent-info">
+            <div class="agent-name">Pei-Ling</div>
+            <div class="agent-role">Creative Strategist</div>
+          </div>
+          <div class="agent-status"><span class="status-dot standby"></span>Concepting</div>
+        </div>
+        <div class="agent-body">
+          <div class="agent-field">
+            <div class="label">Current Focus</div>
+            <div class="value">Research-first creative concepts, scripts, and shot-by-shot ad plans.</div>
+          </div>
+          <div class="agent-meta">
+            <div class="meta-item"><div class="num">Hooks</div><div class="lbl">Matrix</div></div>
+            <div class="meta-item"><div class="num">Remotion</div><div class="lbl">Ready</div></div>
+            <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marly -->
+      <div class="card card-sm agent-card role-cto">
+        <div class="accent-bar"></div>
+        <div class="agent-header">
+          <div class="agent-avatar">📊</div>
+          <div class="agent-info">
+            <div class="agent-name">Marly</div>
+            <div class="agent-role">Media Manager</div>
+          </div>
+          <div class="agent-status"><span class="status-dot standby"></span>Monitoring</div>
+        </div>
+        <div class="agent-body">
+          <div class="agent-field">
+            <div class="label">Current Focus</div>
+            <div class="value">Daily media + funnel performance reporting with ranked optimizations.</div>
+          </div>
+          <div class="agent-meta">
+            <div class="meta-item"><div class="num">Meta+DSP</div><div class="lbl">Channels</div></div>
+            <div class="meta-item"><div class="num">Funnel</div><div class="lbl">Diagnostics</div></div>
             <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
           </div>
         </div>
@@ -840,7 +890,7 @@
     <!-- ═══════════════ AGENTS PAGE ═══════════════ -->
     <div class="page" id="page-agents">
       <div class="section-header">
-        <div class="section-title">Agent Details <span class="section-count">8</span></div>
+        <div class="section-title">Agent Details <span class="section-count">10</span></div>
       </div>
 
       <!-- Dom Card -->
@@ -1099,6 +1149,54 @@
               <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
               <div class="meta-item"><div class="num">MVP</div><div class="lbl">Stage</div></div>
               <div class="meta-item"><div class="num">Compliance</div><div class="lbl">Guardrail</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:16px">
+        <!-- Pei-Ling Full -->
+        <div class="card agent-card role-sales">
+          <div class="accent-bar"></div>
+          <div class="agent-header">
+            <div class="agent-avatar">🎬</div>
+            <div class="agent-info">
+              <div class="agent-name">Pei-Ling</div>
+              <div class="agent-role">Creative Strategist</div>
+            </div>
+            <div class="agent-status"><span class="status-dot standby"></span>Concepting</div>
+          </div>
+          <div class="agent-body">
+            <div class="agent-field"><div class="label">Function</div><div class="value">Research-led creative strategy, scripts, shot breakdowns, and production-ready ad concepts.</div></div>
+            <div class="agent-field"><div class="label">Autonomy Level</div><div class="value">Recommend + produce after Dom approval gates</div></div>
+            <div class="agent-field"><div class="label">Current Task</div><div class="value">Build concept + hook matrix from ICP/HALO + competitor creative research.</div></div>
+            <div class="agent-meta">
+              <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
+              <div class="meta-item"><div class="num">Remotion</div><div class="lbl">Tooling</div></div>
+              <div class="meta-item"><div class="num">R&D</div><div class="lbl">Mode</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marly Full -->
+        <div class="card agent-card role-cto">
+          <div class="accent-bar"></div>
+          <div class="agent-header">
+            <div class="agent-avatar">📊</div>
+            <div class="agent-info">
+              <div class="agent-name">Marly</div>
+              <div class="agent-role">Media Manager</div>
+            </div>
+            <div class="agent-status"><span class="status-dot standby"></span>Monitoring</div>
+          </div>
+          <div class="agent-body">
+            <div class="agent-field"><div class="label">Function</div><div class="value">Daily channel + funnel monitoring for Meta, AudienceAds DSP, and upcoming TikTok.</div></div>
+            <div class="agent-field"><div class="label">Autonomy Level</div><div class="value">Report + recommend (no autonomous execution yet)</div></div>
+            <div class="agent-field"><div class="label">Current Task</div><div class="value">Deliver daily optimization recommendations with benchmark context + funnel leak diagnosis.</div></div>
+            <div class="agent-meta">
+              <div class="meta-item"><div class="num">GPT 5.3</div><div class="lbl">Model</div></div>
+              <div class="meta-item"><div class="num">Daily</div><div class="lbl">Reports</div></div>
+              <div class="meta-item"><div class="num">Funnel</div><div class="lbl">Owned</div></div>
             </div>
           </div>
         </div>
@@ -1797,7 +1895,9 @@
     'Peter': { role: 'CTO', priority: 'high' },
     'Tony': { role: 'Chief Life Officer', priority: 'low' },
     'Nemo': { role: 'Chief Research Officer', priority: 'medium' },
-    'Atlas': { role: 'Chief Opportunity Officer', priority: 'medium' }
+    'Atlas': { role: 'Chief Opportunity Officer', priority: 'medium' },
+    'Pei-Ling': { role: 'Creative Strategist', priority: 'medium' },
+    'Marly': { role: 'Media Manager', priority: 'medium' }
   };
 
   function initCOORouter() {
@@ -1874,7 +1974,7 @@
 
   function inferRoute(text) {
     const t = text.toLowerCase();
-    const scores = { 'Conrad': 0, 'Martin': 0, 'Vale': 0, 'Peter': 0, 'Tony': 0, 'Nemo': 0, 'Atlas': 0 };
+    const scores = { 'Conrad': 0, 'Martin': 0, 'Vale': 0, 'Peter': 0, 'Tony': 0, 'Nemo': 0, 'Atlas': 0, 'Pei-Ling': 0, 'Marly': 0 };
 
     if (/(ad build|ad set|creative|campaign|lead|outreach|follow up|sales|close|prospect|pipeline|offer|client)/.test(t)) scores['Martin'] += 3;
     if (/(relocation|spain|portugal|visa|school|international|move|moving|apostille|pet import|wife opportunity|danai career|neighborhood|housing abroad)/.test(t)) scores['Vale'] += 3;
@@ -1883,6 +1983,8 @@
     if (/(health|workout|family|sleep|nutrition|recovery|boxing|mindset|confidence|stress|energy|clarity|focus|mental|burnout|overwhelm|motivation)/.test(t)) scores['Tony'] += 2;
     if (/(research|framework|benchmark|trend|competitor|intel|insight|study|case study|new tactic)/.test(t)) scores['Nemo'] += 3;
     if (/(affiliate|tiktok|passive income|monetization|autonomous income|side income|experiment|arbitrage|content loop)/.test(t)) scores['Atlas'] += 3;
+    if (/(creative|ad creative|script|hook|angle|moodboard|storyboard|ugc|andromeda|scene|shot list|video concept|scroll-stopping)/.test(t)) scores['Pei-Ling'] += 3;
+    if (/(media|campaign performance|roas|cpa|ctr|cpc|dsp|meta ads|tiktok ads|funnel performance|drop-off|landing page cv|conversion rate)/.test(t)) scores['Marly'] += 3;
 
     // default bias to COO for ambiguous tasks
     scores['Conrad'] += 1;
