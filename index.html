@@ -2358,6 +2358,41 @@
 <script>
 // Emergency interactivity hotfix: ensures tabs/tags/buttons remain clickable even if main init fails.
 (function(){
+  async function emergencyRouteTask(){
+    const input=document.getElementById('cooIntakeInput');
+    const status=document.getElementById('cooRouteStatus');
+    const hint=document.getElementById('cooRouteHint');
+    const override=document.getElementById('cooRouteOverride');
+    const text=(input?.value||'').trim();
+    if(!text){ if(status) status.textContent='Add a task first.'; return; }
+
+    // Prefer full router when available
+    if(typeof routeCOOTask==='function'){
+      await routeCOOTask(text, override?.value || 'auto');
+      if(input) input.value='';
+      if(override) override.value='auto';
+      if(hint) hint.textContent='Suggested route: Conrad (auto)';
+      return;
+    }
+
+    // Hard fallback: local queue + visible status
+    try{
+      const existing=JSON.parse(localStorage.getItem('mc_local_tasks')||'[]');
+      existing.unshift({
+        id:`local-${Date.now()}`,
+        title:text.slice(0,110),
+        description:`[Suggested delegate: Conrad] ${text}`,
+        status:'backlog',
+        priority:'medium',
+        assigned_to:'Conrad',
+        created_at:new Date().toISOString()
+      });
+      localStorage.setItem('mc_local_tasks', JSON.stringify(existing.slice(0,100)));
+      if(status) status.textContent='✅ Sent to Conrad (local fallback).';
+      if(input) input.value='';
+    }catch(e){ if(status) status.textContent='⚠️ Could not route task.'; }
+  }
+
   function switchPage(page){
     if(!page) return;
     const target=document.getElementById('page-'+page);
@@ -2375,6 +2410,9 @@
     const tab=e.target.closest('.nav-tab');
     if(tab){ e.preventDefault(); switchPage(tab.dataset.page); return; }
 
+    const routeBtn=e.target.closest('#cooRouteBtn');
+    if(routeBtn){ e.preventDefault(); emergencyRouteTask(); return; }
+
     // brief tags clickable filter/toggle
     const tag=e.target.closest('.brief-tag');
     if(tag){
@@ -2390,6 +2428,24 @@
       }
     }
   });
+
+  // voice button fallback
+  const voiceBtn=document.getElementById('cooVoiceBtn');
+  if(voiceBtn && !voiceBtn.dataset.fallbackBound){
+    voiceBtn.dataset.fallbackBound='1';
+    voiceBtn.addEventListener('click', ()=>{
+      const status=document.getElementById('cooRouteStatus');
+      const input=document.getElementById('cooIntakeInput');
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      if(!SR){ if(status) status.textContent='Voice input not supported in this browser.'; return; }
+      const recog=new SR();
+      recog.lang='en-US'; recog.interimResults=false; recog.maxAlternatives=1;
+      if(status) status.textContent='Listening…';
+      recog.onresult=(ev)=>{ const t=ev.results?.[0]?.[0]?.transcript||''; if(input) input.value=t; if(status) status.textContent='Voice captured. Click Route Task.'; };
+      recog.onerror=()=>{ if(status) status.textContent='Voice capture failed.'; };
+      recog.start();
+    });
+  }
 
   // hash restore on load
   if(location.hash){ switchPage(location.hash.replace('#','')); }
