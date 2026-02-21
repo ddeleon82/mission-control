@@ -2214,6 +2214,13 @@
       if (done) done.innerHTML = '';
       if (count) count.textContent = tasks.length;
 
+      const escapeHtml = (v) => String(v || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
       tasks.forEach(task => {
         const card = document.createElement('div');
         card.className = 'card card-sm';
@@ -2225,18 +2232,24 @@
           'low': 'var(--accent-green)',
           'urgent': 'var(--accent-orange)'
         };
-        const pColor = priorityColors[task.priority] || 'var(--text-muted)';
+
+        const safeTitle = escapeHtml(task.title || 'Untitled');
+        const rawDesc = String(task.description || '');
+        const safeDesc = escapeHtml(rawDesc.substring(0, 120)) + (rawDesc.length > 120 ? '…' : '');
+        const safePriority = escapeHtml(task.priority || '');
+        const safeAssignee = escapeHtml(task.assigned_to || task.assignee || '');
+        const pColor = priorityColors[String(task.priority || '').toLowerCase()] || 'var(--text-muted)';
 
         card.innerHTML = `
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px;line-height:1.4">${task.title || 'Untitled'}</div>
-          ${task.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5">${task.description.substring(0, 120)}${task.description.length > 120 ? '…' : ''}</div>` : ''}
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;line-height:1.4">${safeTitle}</div>
+          ${rawDesc ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5">${safeDesc}</div>` : ''}
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            ${task.priority ? `<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:${pColor};background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px">${task.priority}</span>` : ''}
-            ${task.assigned_to ? `<span style="font-size:10px;color:var(--text-muted)">→ ${task.assigned_to}</span>` : ''}
+            ${safePriority ? `<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:${pColor};background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px">${safePriority}</span>` : ''}
+            ${safeAssignee ? `<span style="font-size:10px;color:var(--text-muted)">→ ${safeAssignee}</span>` : ''}
           </div>
         `;
 
-        const status = (task.status || 'backlog').toLowerCase();
+        const status = String(task.status || task.column_id || 'backlog').toLowerCase();
         if (status === 'in-progress' || status === 'in_progress') {
           if (inProgress) inProgress.appendChild(card);
         } else if (status === 'done' || status === 'completed') {
