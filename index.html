@@ -2261,15 +2261,28 @@
     } catch(e) { console.log('Tasks load error:', e); }
   }
 
-  // Load tasks on init
-  const sb5 = getSupabase();
-  if (sb5) {
-    loadTasks();
-    sb5
+  // Load tasks on init (with retry for Supabase script race conditions)
+  let tasksRealtimeSubscribed = false;
+  function subscribeTasksRealtime() {
+    if (tasksRealtimeSubscribed) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    sb
       .channel('mc-tasks')
       .on('postgres_changes', { event:'*', schema:'public', table:'tasks' }, () => loadTasks())
       .subscribe();
+    tasksRealtimeSubscribed = true;
   }
+
+  // Always attempt once immediately so local fallback can still render.
+  loadTasks();
+  subscribeTasksRealtime();
+
+  // Retry shortly in case Supabase CDN wasn't ready on first pass.
+  setTimeout(() => {
+    loadTasks();
+    subscribeTasksRealtime();
+  }, 1200);
 
   // ═══ Task Toggle + Inline Editing ═══
   document.addEventListener('click', (e) => {
