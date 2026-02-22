@@ -2040,9 +2040,9 @@
     const payload = {
       title: text.slice(0, 110),
       description: descriptionWithHint,
-      status: 'backlog',
+      column_id: 'backlog',
       priority: route.priority,
-      assigned_to: route.assignee
+      assignee: route.assignee.toLowerCase()
     };
 
     const sb1 = getSupabase();
@@ -2081,9 +2081,9 @@
           id: `local-${Date.now()}`,
           title: text.slice(0, 110),
           description: descriptionWithHint,
-          status: 'backlog',
+          column_id: 'backlog',
           priority: route.priority,
-          assigned_to: route.assignee,
+          assignee: route.assignee.toLowerCase(),
           created_at: new Date().toISOString()
         });
         localStorage.setItem('mc_local_tasks', JSON.stringify(existing.slice(0, 100)));
@@ -2110,9 +2110,9 @@
         const payload = {
           title: t.title || 'Untitled task',
           description: t.description || '',
-          status: t.status || 'backlog',
+          column_id: t.column_id || t.status || 'backlog',
           priority: t.priority || 'medium',
-          assigned_to: t.assigned_to || 'Conrad'
+          assignee: (t.assignee || t.assigned_to || 'conrad').toLowerCase()
         };
         const { error } = await sb.from('tasks').insert(payload);
         if (error) remaining.push(t);
@@ -2160,7 +2160,7 @@
       const { data: tasks } = await sb2
         .from('tasks')
         .select('*')
-        .in('status', ['backlog','in-progress']);
+        .in('column_id', ['backlog','in-progress']);
 
       if (tasks) {
         const el = document.getElementById('ovCosQueue');
