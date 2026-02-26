@@ -1,0 +1,490 @@
+{
+  "jobs": [
+    {
+      "id": "2dc5b77c-9925-422d-aabf-e6e165ed22cb",
+      "agentId": "main",
+      "name": "vale-relocation-morning-checkin",
+      "description": "Daily AM relocation check-in",
+      "enabled": true,
+      "createdAtMs": 1771628584046,
+      "updatedAtMs": 1772088725391,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * *",
+        "tz": "America/Los_Angeles"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "You are Vale (Chief Relocation Officer) reporting through Conrad. Provide a concise relocation check-in for Dom: (1) where we are, (2) what is left, (3) what we are ahead on, (4) what we are behind on, (5) top 3 actions for today with owners. Focus on Spain/Portugal relocation dependencies and deadlines."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1772121600000,
+        "lastRunAtMs": 1772035200048,
+        "lastStatus": "error",
+        "lastDurationMs": 29409,
+        "consecutiveErrors": 5,
+        "lastError": "cron announce delivery failed"
+      }
+    },
+    {
+      "id": "aca96eef-7bba-4dc5-9f69-44e2442ba9c4",
+      "agentId": "main",
+      "name": "danai-international-opportunities-digest",
+      "description": "Daily 8am executive briefing for Danai international opportunities",
+      "enabled": true,
+      "createdAtMs": 1771653066833,
+      "updatedAtMs": 1772043176847,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * *",
+        "tz": "America/Los_Angeles"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Deep research task: Find top 5-10 international opportunities for Danai L. Pointer (senior communications/PR/government affairs leader) with priority on Spain/Portugal and optional global roles if exceptional fit. Run TWO searches daily: (1) direct open roles; (2) staffing/search firms placing senior international communications talent. Create executive briefing with concise fit rationale, immediate next steps, and relocation/location constraints from LA. Then email briefing to dom@freedomandcoffee.co and danaipointer@gmail.com using available Gmail tooling. Keep it actionable for same-day follow-through."
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "telegram",
+        "to": "6693264185"
+      },
+      "state": {
+        "nextRunAtMs": 1772121600000,
+        "lastRunAtMs": 1772043123451,
+        "lastStatus": "ok",
+        "lastDurationMs": 53396,
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "2da0d644-4c19-4a4f-b0ac-48784ab5ca18",
+      "agentId": "main",
+      "name": "Dom Morning Briefing 9AM",
+      "description": "Daily 9am briefing with overdue tasks needing Dom input",
+      "enabled": true,
+      "createdAtMs": 1771990232167,
+      "updatedAtMs": 1772088438170,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *",
+        "tz": "America/Los_Angeles",
+        "staggerMs": 0
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Generate Dom’s concise 9:00 AM morning briefing. First section: Questionnaire + Goals Capture (top priority). Include overnight research as configured, overdue items requiring Dom input, top 3 priorities, calendar, risks, relocation critical path, health reminders, and proactive plan. After drafting, EMAIL the full briefing to dom@freedomandcoffee.co (subject: 'Dom Morning Briefing - {{date}}'). Keep crisp and actionable."
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "telegram",
+        "to": "6693264185"
+      },
+      "state": {
+        "nextRunAtMs": 1772125200000,
+        "lastRunAtMs": 1772038819905,
+        "lastStatus": "error",
+        "lastDurationMs": 67247,
+        "lastError": "cron announce delivery failed",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "e160cc4d-102f-49ab-a141-b47c3a348f01",
+      "agentId": "main",
+      "name": "Daily Proactive Improvement Surprise",
+      "description": "9:30am daily completed workflow/project improvement surprise for Dom",
+      "enabled": true,
+      "createdAtMs": 1771995054247,
+      "updatedAtMs": 1772088439945,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 9 * * *",
+        "tz": "America/Los_Angeles",
+        "staggerMs": 0
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "You are Conrad in COO mode. Complete one proactive improvement to Dom’s existing workflows/projects/tasks each run (completed, not planned). Delegate to sub-agents first where applicable. Then EMAIL Dom a concise completion note to dom@freedomandcoffee.co with subject 'Daily Surprise Complete - {{date}}' including what shipped, why it matters, and artifact location."
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "telegram",
+        "to": "6693264185"
+      },
+      "state": {
+        "nextRunAtMs": 1772127000000,
+        "lastRunAtMs": 1772040600133,
+        "lastStatus": "error",
+        "lastDurationMs": 60380,
+        "lastError": "cron announce delivery failed",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "ce9eccb5-4a41-4a6b-81f1-11cd0248e924",
+      "agentId": "main",
+      "name": "n8n-failure-audit-48h",
+      "description": "Every 48h n8n failure audit on Railway",
+      "enabled": true,
+      "createdAtMs": 1771619081255,
+      "updatedAtMs": 1772088728811,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 172800000,
+        "anchorMs": 1771619081255
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Check the Railway n8n instance (project exciting-harmony, service n8n) for failed automations in the last 48 hours. Report: workflow name, time, error, and whether issue is platform-level vs workflow-level. If unhealthy, suggest concrete fix steps."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1772137481255,
+        "lastRunAtMs": 1771964681278,
+        "lastStatus": "error",
+        "lastDurationMs": 146963,
+        "consecutiveErrors": 2,
+        "lastError": "Unsupported channel: whatsapp"
+      }
+    },
+    {
+      "id": "8849b2d9-2806-40e0-bfab-557cbefcbf86",
+      "agentId": "main",
+      "name": "kalshi-weather-scan",
+      "enabled": true,
+      "createdAtMs": 1771399281414,
+      "updatedAtMs": 1772088719458,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 16 * * *",
+        "tz": "America/Los_Angeles"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the Kalshi weather market scan for tomorrow's markets. Pull NWS forecasts for all 16 cities, screen against v2 strategy rules in memory/kalshi-strategy-v2.md, then hit the Kalshi API for actual contract prices. Report any targets that pass all filters. If nothing passes, say so. Send results to Dom on Telegram.",
+        "timeoutSeconds": 30,
+        "model": "openai-codex/gpt-5.3-codex",
+        "thinking": "low"
+      },
+      "delivery": {
+        "mode": "announce",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1772150400000,
+        "lastRunAtMs": 1772064000049,
+        "lastStatus": "error",
+        "lastDurationMs": 40,
+        "consecutiveErrors": 8,
+        "lastError": "model not allowed: openai-codex/gpt-5.1-codex-mini"
+      }
+    },
+    {
+      "id": "9792b23e-6e08-4146-9c9f-e18cff25181b",
+      "agentId": "main",
+      "name": "vale-relocation-evening-checkin",
+      "description": "Daily PM relocation check-in",
+      "enabled": true,
+      "createdAtMs": 1771628594982,
+      "updatedAtMs": 1772088722472,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 19 * * *",
+        "tz": "America/Los_Angeles"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "You are Vale (Chief Relocation Officer) reporting through Conrad. Provide an evening relocation check-in for Dom: (1) what moved today, (2) what slipped and why, (3) updated ahead/behind status, (4) tomorrow's top 3 relocation actions with owners. Keep it concise and actionable.",
+        "model": "openai-codex/gpt-5.3-codex",
+        "thinking": "low",
+        "timeoutSeconds": 20
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1772161200000,
+        "lastRunAtMs": 1772074800054,
+        "lastStatus": "error",
+        "lastDurationMs": 56,
+        "consecutiveErrors": 6,
+        "lastError": "model not allowed: openai-codex/gpt-5.1-codex-mini"
+      }
+    },
+    {
+      "id": "151a7729-db73-4b58-9c39-2c24011eafd4",
+      "agentId": "main",
+      "name": "vale-weekly-relocation-digest-email",
+      "description": "Sunday relocation digest email to Dom + Danai",
+      "enabled": true,
+      "createdAtMs": 1771628610196,
+      "updatedAtMs": 1772088731662,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 0",
+        "tz": "America/Los_Angeles"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "You are Vale (Chief Relocation Officer) reporting through Conrad. Create a weekly relocation digest for Dom + Danai for Sunday family brunch. Include: (1) wins this week, (2) what is ahead, (3) what is behind, (4) dependency/risk flags, (5) next-week priorities in strict order of operations. Then send it via gog gmail from an available connected account to: danaipointer@gmail.com and dominique.deleon@gmail.com with subject 'Weekly Relocation Digest — Spain/Portugal Plan'. If email send fails, post the full digest in chat and clearly mark SEND_FAILED."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1772384400000,
+        "lastRunAtMs": 1771779600097,
+        "lastStatus": "error",
+        "lastDurationMs": 42304,
+        "lastError": "cron announce delivery failed",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "df02ac92-875f-428e-a2bf-3e25f7af24f9",
+      "agentId": "main",
+      "name": "Monday Legal Check-in",
+      "enabled": true,
+      "createdAtMs": 1769918787804,
+      "updatedAtMs": 1771866000108,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "Reminder: It's Monday morning. Time for Dom's weekly legal check-in. Remind him to: (1) Send status email to James Castle (Liberty Mutual case) if still awaiting response, (2) Check in with Arash Law on the trucking PI case if needed, (3) Ask Dom for a symptom journal update — how's the back, heel, and mobility this week? Log the entry to projects/legal/symptom-journal.md. Keep it conversational, not clinical."
+      },
+      "state": {
+        "nextRunAtMs": 1772470800000,
+        "lastRunAtMs": 1771866000071,
+        "lastStatus": "ok",
+        "lastDurationMs": 37,
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "46352447-7a10-4bc8-9c15-44b7b680da6c",
+      "agentId": "main",
+      "name": "gym-clothes-reminder",
+      "enabled": true,
+      "createdAtMs": 1769578479817,
+      "updatedAtMs": 1769657400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 19 28 1 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "Reminder: Take a change of clothes to the gym so you can shower before Dr. Applegate at 2:30!"
+      },
+      "state": {
+        "nextRunAtMs": 1801193400000,
+        "lastRunAtMs": 1769657400005,
+        "lastStatus": "ok",
+        "lastDurationMs": 30
+      }
+    },
+    {
+      "id": "11597ef6-b8bc-45e6-b0e7-859e7f567c4d",
+      "agentId": "main",
+      "name": "Attorney emails reminder",
+      "enabled": true,
+      "createdAtMs": 1770113317165,
+      "updatedAtMs": 1770138000014,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 3 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "Reminder: Dom, you need to send emails to BOTH attorneys today: (1) James Castle — Liberty Mutual property case status check, (2) Arash Law — trucking PI case status check. You flagged this last night. Don't let it slip. Want me to draft both?"
+      },
+      "state": {
+        "nextRunAtMs": 1801674000000,
+        "lastRunAtMs": 1770138000018,
+        "lastStatus": "ok",
+        "lastDurationMs": 35
+      }
+    },
+    {
+      "id": "fcb583ad-2171-4288-9939-98ca04af8832",
+      "agentId": "main",
+      "name": "dom-wakeup-boxing",
+      "enabled": true,
+      "createdAtMs": 1770721214783,
+      "updatedAtMs": 1770731100003,
+      "schedule": {
+        "kind": "cron",
+        "expr": "45 5 10 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "WAKE UP DOM! 6:30am boxing class in 45 minutes, sparring at 7:30. You got maybe 3 hours of sleep but you committed to this. Get up, hydrate, eat something light. Your sparring tips are ready at output/sparring-prep.md. Let's go champ!"
+      },
+      "state": {
+        "nextRunAtMs": 1802267100000,
+        "lastRunAtMs": 1770731100006,
+        "lastStatus": "ok",
+        "lastDurationMs": 182
+      }
+    },
+    {
+      "id": "ad53a7da-c3ac-4ad5-a0ae-9f2082f5df64",
+      "agentId": "main",
+      "name": "sparring-reminder-feb10",
+      "enabled": true,
+      "createdAtMs": 1770744880029,
+      "updatedAtMs": 1770773400001,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 17 10 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "🥊 Reminder: Sparring in 1 hour (6:30pm). Hydrate, light snack, loosen up. You got this champ."
+      },
+      "state": {
+        "nextRunAtMs": 1802309400000,
+        "lastRunAtMs": 1770773400029,
+        "lastStatus": "ok",
+        "lastDurationMs": 70
+      }
+    },
+    {
+      "id": "3fd974c6-d995-46f8-b09d-9b0b251ec4b4",
+      "agentId": "main",
+      "name": "kalshi-weather-settlement",
+      "enabled": true,
+      "createdAtMs": 1770893310738,
+      "updatedAtMs": 1770966000007,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 23 12 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "🎰 KALSHI DAILY P&L REPORT: Check all positions, calculate wins/losses, report to Dom. Include: (1) Today's manual bets placed earlier, (2) Any auto-trader bets, (3) Total P&L. Run balance check and position check. Summarize results clearly."
+      },
+      "state": {
+        "nextRunAtMs": 1802502000000,
+        "lastRunAtMs": 1770966000008,
+        "lastStatus": "ok",
+        "lastDurationMs": 6
+      }
+    },
+    {
+      "id": "51506df5-047d-4c1f-9631-e36f19c2cc2d",
+      "agentId": "main",
+      "name": "houston-weather-bet-check",
+      "enabled": true,
+      "createdAtMs": 1770922569643,
+      "updatedAtMs": 1770998400010,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 13 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "🌡️ HOUSTON BET CHECK: Yesterday we bet $10 on Houston 75-76°F range (Tomorrow.io/GFS predicted 75-76°F vs NOAA's 79°F). Check: (1) What was the actual recorded high? (2) Did our bet win? (3) Check Kalshi balance/positions for settlement. Report results to Dom!"
+      },
+      "state": {
+        "nextRunAtMs": 1802534400000,
+        "lastRunAtMs": 1770998400011,
+        "lastStatus": "ok",
+        "lastDurationMs": 430
+      }
+    },
+    {
+      "id": "f8211086-5728-4378-b600-7c2a577f5056",
+      "agentId": "main",
+      "name": "kalshi-paper-trade-check",
+      "enabled": true,
+      "createdAtMs": 1771016254036,
+      "updatedAtMs": 1771171200008,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 15 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "🌡️ KALSHI PAPER TRADE CHECK: Feb 14 paper bets should have settled. Check actual temps for Dallas (80°F NOAA), Houston (75°F), Minneapolis (47°F), Seattle (48°F). Update memory/kalshi-paper-trades.md with actual results. Calculate paper P/L. If strategy looks profitable, scan for new paper positions."
+      },
+      "state": {
+        "nextRunAtMs": 1802707200000,
+        "lastRunAtMs": 1771171200009,
+        "lastStatus": "ok",
+        "lastDurationMs": 6
+      }
+    },
+    {
+      "id": "1374b7ff-f4fd-40cc-8a81-a368b68265fa",
+      "agentId": "main",
+      "name": "kalshi-feb16-morning",
+      "enabled": true,
+      "createdAtMs": 1771219155428,
+      "updatedAtMs": 1771255800003,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 16 2 *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "🌡️ KALSHI MORNING CHECK-IN: Markets for Feb 16 should be live now. (1) Pull fresh NWS forecasts for Minneapolis, Dallas, Denver, Chicago, Houston. (2) Verify edges still look good (6°F+ cushions). (3) Email Dom at dom@freedomandcoffee.co with final picks including REAL Kalshi market prices. Include any overnight forecast changes. This is for his manual paper trading."
+      },
+      "state": {
+        "nextRunAtMs": 1802791800000,
+        "lastRunAtMs": 1771255800011,
+        "lastStatus": "ok",
+        "lastDurationMs": 60
+      }
+    }
+  ]
+}

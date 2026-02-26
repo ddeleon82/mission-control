@@ -18,6 +18,7 @@ An org-chart style command center for managing AI agent roles:
 - **Tasks** — Kanban-style task board (backlog/in-progress/done) synced with Supabase
 - **Daily Brief** — Priorities, email triage, calendar, pipeline, life check
 - **Pipeline** — Sales leads and SDR build status
+- **Cron Calendar** — Monthly calendar view of cron jobs (with failure/health badges)
 - **Org Chart** — Visual hierarchy with phase 2 preview
 
 ## Tech Stack
@@ -34,6 +35,29 @@ Just open `index.html` in a browser. Password: `freedomandcoffee`
 ## Deployment
 
 Push to GitHub, enable Pages on main branch.
+
+## Operational Safety: Data Snapshots
+
+Use the included script to take a read-only Supabase snapshot of the two live tables (`tasks`, `agent_status`) before major changes:
+
+```bash
+./scripts/snapshot_supabase.sh
+```
+
+Output is written locally to timestamped folders under:
+
+- `backups/YYYY-MM-DD/YYYYMMDD-HHMMSS/`
+
+This reduces rollback risk and gives you a quick local restore reference if a bad write or schema change causes dashboard issues.
+
+## Cron Calendar Data Sync
+
+Mission Control reads cron jobs from `data/cron-jobs.json`.
+Refresh it before pushing dashboard updates:
+
+```bash
+./scripts/update-cron-calendar.sh
+```
 
 ## History
 
